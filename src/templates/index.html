@@ -1,0 +1,85 @@
+{% extends "page" %}
+
+{% block title %}{{ project.name }} - Index {% endblock title %}
+
+{% block content %}
+{{ content }}
+
+{% if namespace.namespaces %}
+  <h2 id="namespaces"> Namespaces </h2>
+<ul class="item-table">
+    {%- for ns in namespace.namespaces %}
+    <li>
+      <a href="{{ namespace.name }}/{{ ns.name }}/index.html" class="item-name">{{ ns.name }}</a>
+    {% if ns.comment %}
+     <div class="item-desc">{{ ns.comment["brief"] }}</div>
+     {% endif %}
+     </li>
+
+    {%- endfor %}
+  </ul>
+{% endif %}
+
+  {% if namespace.records %}
+  <h2 id="records"> Records </h2>
+  <ul class="item-table">
+   {%- for record in namespace.records %}
+    <li>
+    <a href="{{ namespace.name }}/record.{{ record.name }}.html" class="item-name">{{ record.name }}</a>
+    {% if record.comment %}
+     <div class="item-desc">{{ record.comment["brief"] }}</div>
+    {% endif %}
+    </li>
+  {%- endfor %}
+  </ul>
+  {% endif %}
+
+ {% if namespace.functions %}
+  <h2 id="functions"> Functions </h2>
+  <ul class="item-table">
+   {%- for func in namespace.functions %}
+   <li>
+     {% if func.name == "operator/" %}
+     <a href="{{ namespace.name }}/function.operatorslash.html" class="item-name">operator/</a>
+     {% else %}
+     <a href="{{ namespace.name }}/function.{{ func.name }}.html" class="item-name">{{ func.name }}</a>
+     {% endif %}
+    {% if func.comment %}
+     <div class="item-desc">{{ func.comment["brief"] }}</div>
+    {% endif %}
+    </li>
+  {%- endfor %}
+  </ul>
+  {% endif %}
+
+
+ {% if namespace.enums %}
+  <h2 id="enums"> Enums </h2>
+  <ul class="item-table">
+   {%- for enum in namespace.enums %}
+    <li>
+    <a href="{{ namespace.name }}/enum.{{ enum.name }}.html" class="item-name">{{ enum.name }}</a>
+    {% if enum.comment %}
+     <div class="item-desc">{{ enum.comment["brief"] }}</div>
+    {% endif %}
+    </li>
+  {%- endfor %}
+  </ul>
+  {% endif %}
+
+ {% if namespace.aliases %}
+  <h2 id="aliases"> Aliases </h2>
+  <ul class="item-table">
+   {%- for alias in namespace.aliases %}
+    <li>
+    <a href="{{ namespace.name }}/alias.{{ alias.name }}.html" class="item-name">{{ alias.name }}</a>
+    {% if alias.comment %}
+     <div class="item-desc">{{ alias.comment["brief"] }}</div>
+    {% endif %}
+    </li>
+  {%- endfor %}
+  </ul>
+  {% endif %}
+
+ {% endblock content %}
+    

@@ -1,0 +1,71 @@
+{% extends "page" %}
+
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/style.css" />
+<title>Search - {{ project.name }} </title>
+<script src="https://cdn.jsdelivr.net/npm/minisearch@7.1.1/dist/umd/index.min.js"></script>
+<script type="text/javascript">
+	// Read file /search_index.json
+	var url = window.location;
+	let params = new URLSearchParams(url.search);
+	let query = params.get('query');
+
+	const capitalize = s => s && String(s[0]).toUpperCase() + String(s).slice(1)
+
+
+	fetch('/search_index.json')
+		.then(response => response.json())
+		.then(data => {
+			// Create the MiniSearch instance
+			const miniSearch = new MiniSearch({
+				fields: ['name'], // fields to index for full-text search
+				searchOptions: {
+					fuzzy: 0.2,
+				},
+			});
+
+			// Index all data
+			miniSearch.addAll(data);
+
+			const results = miniSearch.search(query, { prefix: true });
+
+			var searchResults = document.getElementById('search-results');
+			searchResults.innerHTML = '';
+
+			if (results.length == 0) {
+				searchResults.innerHTML = '<p> No results found for "' + query + '" </p>';
+			} else {
+				searchResults.innerHTML = '<p> Found ' + results.length + ' result(s) matching the query</p>';
+			}
+
+			for (var i = 0; i < results.length; i++) {
+				var result = data[results[i].id];
+				var resultElement = document.createElement('li');
+				resultElement.innerHTML = '<a class=\"item-name\" href="/' + result.link + '.html">' + result.name + '</a>';
+
+				var resultDescription = document.createElement('div');
+				resultDescription.className = 'item-desc';
+
+				resultDescription.innerHTML = '<p>' + capitalize(result.kind) + '</p>';
+				resultElement.appendChild(resultDescription);
+				searchResults.appendChild(resultElement);
+			}
+
+		});
+
+
+</script>
+{% endblock head %}
+
+{% block content %}
+<h1> Search Results </h1>
+
+
+<ul id="search-results" class="item-table">
+	<p> Loading... </p>
+</ul>
+
+
+
+{% endblock content %}

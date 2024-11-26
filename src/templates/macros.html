@@ -1,0 +1,50 @@
+{% macro output_decl_raw(decl, namespace, parent) -%}{%if decl.struct %}<pre style="margin:0;">{{ output_struct(struct=decl.struct, namespace=namespace, type=decl.type) }}{% else %}{{ link_for_type(type=decl.type, namespace=namespace, parent=parent)}}{% endif %}{%if decl.name %} {{ decl.name }}{%if decl.struct %}</pre>{%endif%}{%endif%}{% endmacro -%}
+
+{% macro output_decl(decl, namespace, parent) -%}
+<code class="nobg">{{self::output_decl_raw(decl=decl, namespace=namespace, parent=parent)}}</code>
+{% endmacro -%}
+
+
+{% macro output_method(method, namespace, parent) -%}
+<code class="nobg">
+{% if method.template %}
+{{ output_template(template=method.template, namespace=namespace) }}
+{% endif %}  
+{% if method.props and method.props.static %}
+static
+{% endif %}
+{% if method.props and method.props.virtual %}
+virtual
+{% endif %}
+{{ link_for_type(type=method.return_type, namespace=namespace) }} {{ method.name }}({%for param in method.parameters %}{{self::output_decl_raw(decl=param, namespace=namespace, parent=parent)}}{% if not loop.last %}, {% endif %}{%endfor%}) {% if method.props and method.props.const %}
+const
+{% endif %}
+</code>
+{% endmacro -%}
+
+{% macro sidebar(pages, project) -%}
+ <div class="sidebar" role="navigation" aria-label="Main">
+    <div class="sidebarwrapper">
+      <h1>{{ project.name }}</h1>
+      <form action="/search.html" method="get">
+        <input class="searchbar" type="text" name="query" placeholder="Search...">
+      </form>
+      <h2> Pages </h2>
+      <ul>
+        <li><a href="/index.html">Index</a></li>
+        {% for page in pages['extra'] %}
+        <li><a href="/{{ page['path'] }}.html">{{ page['title'] }}</a></li>
+        {% endfor%}
+      </ul>
+
+      <h2> Reference </h2>
+      <ul>
+        <li><a href="/index.html#functions">Functions</a></li>
+        <li><a href="/index.html#namespaces">Namespaces</a></li>
+        <li><a href="/index.html#records">Records</a></li>
+        <li><a href="/index.html#concepts">Concepts</a></li>
+        <li><a href="/index.html#enums">Enums</a></li>
+      </ul>
+    </div>
+  </div>
+{% endmacro %}

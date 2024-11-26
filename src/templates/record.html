@@ -1,0 +1,108 @@
+{% extends "page" %}
+
+{% block title %}{{ record.name }} - {{ project.name }}{% endblock title %}
+
+{% block content %}
+<div class="namespace-link">
+    {{ get_link_for_namespace(namespace=record.namespace)}}
+</div>
+
+<h1>Record {{ record.name }}</h1>
+
+    {{ listing }}
+    {% if record.comment %}
+    <h2> Description </h2>
+     {{ record.comment["brief"] }}
+     {{ record.comment["description"] }}
+    {% endif %}
+
+
+    {% if record.fields %}
+    <h2> Fields </h2>
+    {% for field in record.fields %}
+    <div class="field highlight nobg">
+        {{ macros::output_decl(decl=field, namespace=record.namespace, parent=record) }}
+
+    {% if field.comment %}
+     <div class="item-desc">{{ field.comment["brief"] }}</div>
+     <div class="item-desc">{{ field.comment["description"] }}</div>
+     {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if record.ctor %}
+    <h2> Constructor </h2>
+    {% for ctor in record.ctor %}
+    <div class="method highlight nobg">
+    {{ macros::output_method(method=ctor, namespace=record.namespace, parent=record) }}
+    </div>
+    {% if ctor.comment %}
+     <div class="item-desc">{{ ctor.comment["brief"] }}</div>
+     <div class="item-desc">{{ ctor.comment["description"] }}</div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+
+    {% if record.methods %}
+    <h2> Methods </h2>
+    {% for method in record.methods %}
+    <div class="method highlight nobg">
+    {{ macros::output_method(method=method, namespace=record.namespace, parent=record) }}
+    </div>
+
+    {% if method.comment %}
+     <div class="item-desc">{{ method.comment["brief"] }}</div>
+     <div class="item-desc">{{ method.comment["description"] }}</div>
+     {% endif %}
+
+     {% if method.overloads %}
+     {% for overload in method.overloads %}
+     <div class="method highlight nobg">
+       {{ macros::output_method(method=overload, namespace=record.namespace, parent=record) }}
+     </div>
+     {% if overload.comment %}
+     <div class="item-desc">{{ overload.comment["brief"] }}</div>
+     <div class="item-desc">{{ overload.comment["description"] }}</div>
+     {% endif %}
+     {% endfor %}
+     {% endif %}
+     
+    {% endfor %}
+    {% endif %}
+
+    {% if record.comment %}
+    {% if record.comment["impl"] %}
+    <h2> Concepts </h2>
+    <p> This record implements the following concepts: </p>
+    <ul>
+    {% for desc in record.comment["impl"] %}
+    <li>{{ desc }}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
+
+    {% if record.nested %}
+    <h2> Nested Types </h2>
+    {% for nested in record.nested %}
+    <div class="highlight nobg">
+      {% if nested.Enum %}
+      {{ link_for_type(type=nested.Enum.name, namespace=nested.Enum.namespace) }}
+      {% else %}
+      {{ link_for_type(type=nested.Record.name, namespace=nested.Record.namespace) }}
+      {% endif %}
+    </div>
+    {% if nested.comment %}
+     <div class="item-desc">{{ nested.comment["brief"] }}</div>
+     <div class="item-desc">{{ nested.comment["description"] }}</div>
+     {% endif %}
+    {% endfor %}
+    {% endif %}
+     
+
+{% endblock content %}
+
+
+   

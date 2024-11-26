@@ -1,0 +1,86 @@
+Inserting nested enum: Flags at Path::Flags
+{
+  "root": {
+    "name": "",
+    "comment": null,
+    "records": [
+      {
+        "name": "Path",
+        "fields": [],
+        "comment": null,
+        "kind": "struct",
+        "namespace": "",
+        "ctor": [],
+        "methods": [
+          {
+            "name": "method",
+            "return_type": "void",
+            "parameters": [
+              {
+                "name": "flags",
+                "type": "Flags",
+                "comment": null,
+                "struct": null
+              }
+            ],
+            "comment": null,
+            "props": {
+              "const": false,
+              "static": false,
+              "virtual": false
+            },
+            "namespace": "Path",
+            "template": null,
+            "overloads": null
+          }
+        ],
+        "template": null,
+        "nested": [
+          {
+            "Enum": {
+              "name": "Flags",
+              "comment": null,
+              "namespace": "Path",
+              "values": [
+                {
+                  "name": "C",
+                  "comment": null
+                },
+                {
+                  "name": "D",
+                  "comment": null
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "functions": [],
+    "namespaces": [],
+    "enums": [
+      {
+        "name": "Flags",
+        "comment": null,
+        "namespace": "",
+        "values": [
+          {
+            "name": "A",
+            "comment": null
+          },
+          {
+            "name": "B",
+            "comment": null
+          }
+        ]
+      }
+    ],
+    "aliases": [],
+    "namespace": null
+  },
+  "index": {
+    "Flags": "enum",
+    "Path": "record",
+    "Path::Flags": "enum"
+  }
+}

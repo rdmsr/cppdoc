@@ -1,0 +1,18 @@
+{% extends "page" %}
+
+{% block title %}{{ alias.name }} - {{ project.name }}{% endblock title %}
+
+{% block content %}
+<div class="namespace-link">
+    {{ get_link_for_namespace(namespace=alias.namespace) }}
+</div>
+
+<h1>Alias {{ alias.name }}</h1>
+{{ listing }}
+{% if alias.comment %}
+<h2> Description </h2>
+{{ alias.comment["brief"] }}
+{{ alias.comment["description"] }}
+{% endif %}
+
+{% endblock content %}
