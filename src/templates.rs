@@ -19,8 +19,8 @@ const ALIAS_TEMPLATE: &str = include_str!("templates/alias.html");
 
 fn cleanup_type(type_: &str) -> String {
     // Lmao
-    let ret = type_.replace(" &", "</span>&").replace(" *", "</span>*");
-    ret
+    
+    type_.replace(" &", "</span>&").replace(" *", "</span>*")
 }
 
 fn tera_output_template(index: HashMap<String, String>) -> impl tera::Function {
@@ -102,7 +102,7 @@ fn tera_get_link_for_namespace(index: HashMap<String, String>) -> impl tera::Fun
                         link.push_str(" :: ");
                     }
 
-                    acc.push_str("/");
+                    acc.push('/');
                 }
 
                 Ok(tera::to_value(link).unwrap())
@@ -151,15 +151,15 @@ fn tera_output_struct(index: HashMap<String, String>) -> impl tera::Function {
                     ));
 
                     if i < fields_count - 1 {
-                        listing.push_str("\n");
+                        listing.push('\n');
                     }
                 }
 
                 if fields_count != 0 {
-                    listing.push_str("\n");
+                    listing.push('\n');
                 }
 
-                listing.push_str("}");
+                listing.push('}');
 
                 Ok(tera::to_value(listing).unwrap())
             } else if type_ == "enum" {
@@ -184,15 +184,15 @@ fn tera_output_struct(index: HashMap<String, String>) -> impl tera::Function {
                     listing.push_str(&format!("{};", name));
 
                     if i < fields_count - 1 {
-                        listing.push_str("\n");
+                        listing.push('\n');
                     }
                 }
 
                 if fields_count != 0 {
-                    listing.push_str("\n");
+                    listing.push('\n');
                 }
 
-                listing.push_str("}");
+                listing.push('}');
 
                 Ok(tera::to_value(listing).unwrap())
             } else {
@@ -329,7 +329,7 @@ fn get_link_for_type(
             "{}&lt;{}&gt;{}",
             get_link_for_type(type_name, curr_namespace, index).unwrap_or_else(|| format!(
                 "<span class=\"kt\">{}</span>",
-                cleanup_type(type_name).to_string()
+                cleanup_type(type_name)
             )),
             ret,
             suffix
@@ -490,7 +490,7 @@ pub fn output_record(
     let ns_name = record.namespace.clone().unwrap_or_default();
 
     if !record.fields.is_empty() {
-        listing.push_str("\n");
+        listing.push('\n');
     }
 
     for field in &record.fields {
@@ -532,7 +532,7 @@ pub fn output_record(
     }
 
     if let Some(nested) = &record.nested {
-        if nested.len() > 0 {
+        if !nested.is_empty() {
             // Create a directory to represent nested types
             let path = format!(
                 "{}/{}/{}",
@@ -570,9 +570,9 @@ pub fn output_record(
 
     listing.push_str("<span class=\"c\">  /* Full declaration omitted */ </span>");
     if !record.fields.is_empty() {
-        listing.push_str("\n");
+        listing.push('\n');
     }
-    listing.push_str("}");
+    listing.push('}');
 
     let listing = format!(
         "<div class=\"code highlight\"><pre><code>{}</code></pre></div>",
@@ -674,7 +674,7 @@ fn output_enum(
     let value_cnt = enum_.values.len();
 
     if value_cnt != 0 {
-        listing.push_str("\n");
+        listing.push('\n');
     }
 
     for (i, value) in enum_.values.iter().enumerate() {
@@ -686,7 +686,7 @@ fn output_enum(
         }
     }
     if value_cnt != 0 {
-        listing.push_str("\n");
+        listing.push('\n');
     }
     listing.push_str("};");
 
@@ -755,7 +755,7 @@ pub fn output_namespace(
 
     let path = format!("{}/{}", config.output.path, path);
 
-    std::fs::create_dir_all(format!("{}/{}", path, namespace.name.to_string()))?;
+    std::fs::create_dir_all(format!("{}/{}", path, namespace.name))?;
 
     let path = format!(
         "{}/{}/index.html",

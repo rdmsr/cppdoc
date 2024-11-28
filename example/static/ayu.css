@@ -16,9 +16,8 @@
 }
 
 
-pre { line-height: 125%; }
-.highlight.hll { background-color: #ffffcc }
-.highlight  { background: #191f26; color: #E6E1CF; background-color: #191f26 }
+.highlight .hll { background-color: #ffffcc }
+.highlight { background: #191f26; color: #E6E1CF; background-color: #191f26 }
 .highlight .c { color: #5C6773; background-color: #191f26 } /* Comment */
 .highlight .err { color: #E6E1CF; background-color: #191f26 } /* Error */
 .highlight .esc { color: #E6E1CF; background-color: #191f26 } /* Escape */

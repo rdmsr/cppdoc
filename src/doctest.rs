@@ -41,14 +41,14 @@ impl Doctest {
                     include.push(line.trim_start_matches("@include").trim().to_string());
                 } else {
                     full_code.push_str(line.trim_start_matches("@"));
-                    full_code.push_str("\n");
+                    full_code.push('\n');
                 }
             } else {
                 display_code.push_str(line);
-                display_code.push_str("\n");
+                display_code.push('\n');
 
                 full_code.push_str(line);
-                full_code.push_str("\n");
+                full_code.push('\n');
             }
         }
 

@@ -1,4 +1,3 @@
-use clang;
 use clap::{Parser, Subcommand};
 use glob::glob;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -114,7 +113,7 @@ fn main() {
             render::process_namespace(root_namespace, &output.index, &mut doctests);
 
             let index = match config.pages.index {
-                Some(ref x) => std::fs::read_to_string(&x).unwrap(),
+                Some(ref x) => std::fs::read_to_string(x).unwrap(),
                 None => match root_namespace.comment {
                     Some(ref comment) => comment.description.clone(),
                     None => String::new(),
@@ -159,7 +158,7 @@ fn main() {
                     );
 
                     for doc in doctests {
-                        let out = doc.compile(&doctest_conf);
+                        let out = doc.compile(doctest_conf);
 
                         if doctest_conf.run {
                             doc.run(out);
@@ -182,7 +181,7 @@ fn main() {
 
             for page in &pages.extra {
                 let path = page.path.split("/").collect::<Vec<&str>>();
-                std::fs::create_dir_all(&format!(
+                std::fs::create_dir_all(format!(
                     "{}/{}",
                     config.output.path,
                     path[..path.len() - 1].join("/")
@@ -228,7 +227,7 @@ fn main() {
             let bar = ProgressBar::new_spinner();
             bar.enable_steady_tick(Duration::from_millis(100));
             bar.set_message("Rendering root namespace");
-            templates::output_namespace(&root_namespace, &pages, &config, &output.index, &tera)
+            templates::output_namespace(root_namespace, &pages, &config, &output.index, &tera)
                 .unwrap();
             bar.finish_and_clear();
 
@@ -253,10 +252,10 @@ fn main() {
                         "namespace" => {
                             format!(
                                 "{}/index",
-                                get_path_for_name(&item.0, &output.index).unwrap_or_default()
+                                get_path_for_name(item.0, &output.index).unwrap_or_default()
                             )
                         }
-                        _ => get_path_for_name(&item.0, &output.index).unwrap_or_default(),
+                        _ => get_path_for_name(item.0, &output.index).unwrap_or_default(),
                     }
                     .replace("\"", "&quot;")
                     .to_string(),

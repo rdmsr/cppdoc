@@ -1,8 +1,8 @@
 use crate::parser::Comment;
 
 fn remove_prefix_and_clean(string: &str, prefix: &str) -> String {
-    if string.starts_with(prefix) {
-        string[prefix.len()..].trim().to_string()
+    if let Some(stripped) = string.strip_prefix(prefix) {
+        stripped.trim().to_string()
     } else {
         string.trim().to_string()
     }

@@ -1,6 +1,5 @@
 use crate::comment;
 use crate::config;
-use clang;
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -171,9 +170,7 @@ impl<'a> Parser<'a> {
         // Handle function names with quotes, like operator"", so that links don't fuck up
         ret.name = ret.name.replace("\"", "&quot");
 
-        node.get_comment().map(|c| {
-            ret.comment = Some(comment::parse_comment(c));
-        });
+        if let Some(c) = node.get_comment() { ret.comment = Some(comment::parse_comment(c)); }
 
         for c in node
             .get_children()
@@ -218,9 +215,7 @@ impl<'a> Parser<'a> {
             nested: None,
         };
 
-        node.get_comment().map(|c| {
-            ret.comment = Some(comment::parse_comment(c));
-        });
+        if let Some(c) = node.get_comment() { ret.comment = Some(comment::parse_comment(c)); }
 
         if node.get_kind() == clang::EntityKind::ClassTemplate {
             ret.template = Some(self.parse_template(node));
@@ -228,55 +223,52 @@ impl<'a> Parser<'a> {
 
         for c in node.get_children().iter() {
             match c.get_kind() {
-                clang::EntityKind::FieldDecl => match c.get_accessibility() {
-                    Some(clang::Accessibility::Public) => {
-                        let mut field = Field {
-                            name: c.get_name().unwrap_or_default(),
-                            type_: c.get_type().unwrap().get_display_name(),
-                            comment: c.get_comment().map(|c| comment::parse_comment(c)),
-                            struct_: None,
-                        };
+                clang::EntityKind::FieldDecl => if let Some(clang::Accessibility::Public) = c.get_accessibility() {
+                    let mut field = Field {
+                        name: c.get_name().unwrap_or_default(),
+                        type_: c.get_type().unwrap().get_display_name(),
+                        comment: c.get_comment().map(comment::parse_comment),
+                        struct_: None,
+                    };
 
-                        // NOTE: We assume that unnamed struct types always have "(unnamed struct" in their
-                        if field.type_.contains("(unnamed struct") {
-                            let ret_struct = self.parse_record(
-                                *c.get_children()
-                                    .iter()
-                                    .find(|c| c.get_kind() == clang::EntityKind::StructDecl)
-                                    .unwrap(),
-                            );
+                    // NOTE: We assume that unnamed struct types always have "(unnamed struct" in their
+                    if field.type_.contains("(unnamed struct") {
+                        let ret_struct = self.parse_record(
+                            *c.get_children()
+                                .iter()
+                                .find(|c| c.get_kind() == clang::EntityKind::StructDecl)
+                                .unwrap(),
+                        );
 
-                            field.type_ = "struct".to_string();
-                            field.struct_ = Some(NestedField::Record(ret_struct));
-                        }
-
-                        if field.type_.contains("(unnamed union") {
-                            let ret_struct = self.parse_record(
-                                *c.get_children()
-                                    .iter()
-                                    .find(|c| c.get_kind() == clang::EntityKind::UnionDecl)
-                                    .unwrap(),
-                            );
-
-                            field.type_ = "union".to_string();
-                            field.struct_ = Some(NestedField::Record(ret_struct));
-                        }
-
-                        if field.type_.contains("(unnamed enum") {
-                            let ret_enum = self.parse_enum(
-                                *c.get_children()
-                                    .iter()
-                                    .find(|c| c.get_kind() == clang::EntityKind::EnumDecl)
-                                    .unwrap(),
-                            );
-
-                            field.type_ = "enum".to_string();
-                            field.struct_ = Some(NestedField::Enum(ret_enum));
-                        }
-
-                        ret.fields.push(field);
+                        field.type_ = "struct".to_string();
+                        field.struct_ = Some(NestedField::Record(ret_struct));
                     }
-                    _ => {}
+
+                    if field.type_.contains("(unnamed union") {
+                        let ret_struct = self.parse_record(
+                            *c.get_children()
+                                .iter()
+                                .find(|c| c.get_kind() == clang::EntityKind::UnionDecl)
+                                .unwrap(),
+                        );
+
+                        field.type_ = "union".to_string();
+                        field.struct_ = Some(NestedField::Record(ret_struct));
+                    }
+
+                    if field.type_.contains("(unnamed enum") {
+                        let ret_enum = self.parse_enum(
+                            *c.get_children()
+                                .iter()
+                                .find(|c| c.get_kind() == clang::EntityKind::EnumDecl)
+                                .unwrap(),
+                        );
+
+                        field.type_ = "enum".to_string();
+                        field.struct_ = Some(NestedField::Enum(ret_enum));
+                    }
+
+                    ret.fields.push(field);
                 },
 
                 clang::EntityKind::Constructor => {
@@ -287,14 +279,11 @@ impl<'a> Parser<'a> {
                 }
 
                 clang::EntityKind::Method | clang::EntityKind::FunctionTemplate => {
-                    match c.get_accessibility() {
-                        Some(clang::Accessibility::Public) => {
-                            let mut function = self.parse_function(*c);
-                            function.namespace = Some(ret.name.clone());
+                    if let Some(clang::Accessibility::Public) = c.get_accessibility() {
+                        let mut function = self.parse_function(*c);
+                        function.namespace = Some(ret.name.clone());
 
-                            ret.methods.push(function);
-                        }
-                        _ => {}
+                        ret.methods.push(function);
                     }
                 }
 
@@ -349,15 +338,13 @@ impl<'a> Parser<'a> {
             values: Vec::new(),
         };
 
-        node.get_comment().map(|c| {
-            ret.comment = Some(comment::parse_comment(c));
-        });
+        if let Some(c) = node.get_comment() { ret.comment = Some(comment::parse_comment(c)); }
 
         for c in node.get_children().iter() {
             if c.get_kind() == clang::EntityKind::EnumConstantDecl {
                 let value = EnumValue {
                     name: c.get_name().unwrap_or_default(),
-                    comment: c.get_comment().map(|c| comment::parse_comment(c)),
+                    comment: c.get_comment().map(comment::parse_comment),
                 };
 
                 ret.values.push(value);
@@ -488,7 +475,7 @@ impl<'a> Parser<'a> {
                 let name = node.get_name().unwrap();
                 let mut real_ns = Namespace {
                     name: node.get_name().unwrap(),
-                    comment: node.get_comment().map(|c| comment::parse_comment(c)),
+                    comment: node.get_comment().map(comment::parse_comment),
                     records: Vec::new(),
                     functions: Vec::new(),
                     namespaces: Vec::new(),
@@ -499,7 +486,7 @@ impl<'a> Parser<'a> {
 
                 let mut already_exists = false;
 
-                let mut new_ns =
+                let new_ns =
                     if let Some(existing_ns) = ns.namespaces.iter_mut().find(|n| n.name == name) {
                         already_exists = true;
                         existing_ns
@@ -513,12 +500,12 @@ impl<'a> Parser<'a> {
                     if !current_namespace_name.is_empty() {
                         self.parse_node(
                             cursor,
-                            &mut new_ns,
+                            new_ns,
                             index,
                             format!("{}::{}", current_namespace_name, name.as_str()).as_str(),
                         );
                     } else {
-                        self.parse_node(cursor, &mut new_ns, index, name.as_str());
+                        self.parse_node(cursor, new_ns, index, name.as_str());
                     }
                 }
 
@@ -541,21 +528,21 @@ impl<'a> Parser<'a> {
                         } else {
                             let display_name = c.get_display_name().unwrap();
                             let display_name = display_name.trim_start_matches("struct ");
-                            type_.push_str(&display_name);
+                            type_.push_str(display_name);
                         }
                     } else if c.get_kind() == clang::EntityKind::TemplateRef {
                         templated = true;
                         type_ = c.get_display_name().unwrap();
-                        type_.push_str("<");
+                        type_.push('<');
                     }
 
                     if templated && i < child_count - 1 && i != 0 {
-                        type_.push_str(",");
+                        type_.push(',');
                     }
                 }
 
                 if templated {
-                    type_.push_str(">");
+                    type_.push('>');
                 }
 
                 if type_.is_empty() {
@@ -566,7 +553,7 @@ impl<'a> Parser<'a> {
                     namespace: Some(current_namespace_name.to_string()),
                     name: node.get_name().unwrap(),
                     type_,
-                    comment: node.get_comment().map(|c| comment::parse_comment(c)),
+                    comment: node.get_comment().map(comment::parse_comment),
                 };
 
                 index.insert(absolute_name, "alias".to_string());

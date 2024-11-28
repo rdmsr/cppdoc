@@ -1,5 +1,5 @@
 [project]
-name = "Atlas"
+name = "cppdoc-example"
 version = "0.1.0"
 
 [input]

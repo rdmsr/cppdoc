@@ -23,7 +23,7 @@ pub fn get_path_for_name(name: &str, index: &HashMap<String, String>) -> Option<
 
     let name = name.trim_start_matches("::");
 
-    if name.find("::").is_some() {
+    if name.contains("::") {
         let parts = name.split("::");
         let basename = parts.clone().last()?.replace("/", "slash");
 
@@ -36,7 +36,7 @@ pub fn get_path_for_name(name: &str, index: &HashMap<String, String>) -> Option<
         return Some(format!("{}/{}.{}", path, kind, basename));
     }
 
-    return Some(format!("{}.{}", kind, name.replace("/", "slash")));
+    Some(format!("{}.{}", kind, name.replace("/", "slash")))
 }
 
 pub fn get_namespace_path(name: &str) -> String {
@@ -143,7 +143,7 @@ pub fn process_markdown(
             if let pulldown_cmark::CowStr::Borrowed(url) = dest_url {
                 if url.starts_with("::") {
                     let url = url.trim_start_matches("::");
-                    let real = get_path_for_name(url, &index);
+                    let real = get_path_for_name(url, index);
 
                     if let Some(real) = real {
                         return Some(Event::Html(format!("<a href=\"/{}.html\">", real).into()));
