@@ -1,23 +1,14 @@
-# cppdoc demo
-This is a demo documentation README
+# cppdoc 
+cppdoc is a C++ documentation generator inspired by `rustdoc`
 
-READMEs get the code reference appended
+## Features
+- `rustdoc`-like documentation comments, rendered using markdown
+- Documentation tests using codeblocks
+- Extra documentation pages in markdown
+- mermaid.js graphs
+- Flexible styling options, with user-supplied stylesheets (see default themes in `example/`)
+- libclang-based parser with support for records, enums, functions and namespaces
+- Fair performance, with generation usually being faster than clang-backed Doxygen
 
-```nomain
-#include <iostream>
-
-template<typename T>
-concept A = requires(T a) {
-    { a.func() } -> std::same_as<bool>;
-};
-
-int main()
-{
-    std::cout << "hello, world!" << std::endl;
-    return 0;
-}
-```
-
-
-
-[Test](::A)
+## Preview
+Screenshot soon :tm:
