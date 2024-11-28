@@ -43,7 +43,7 @@ jobs:
       - name: Run Cargo project in 'example' directory
         run: |
           cd example
-          cargo run build
+          cargo --release run build
 
       - name: Deploy docs to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
