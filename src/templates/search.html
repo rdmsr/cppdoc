@@ -14,7 +14,7 @@
 	const capitalize = s => s && String(s[0]).toUpperCase() + String(s).slice(1)
 
 
-	fetch('/search_index.json')
+  fetch('{{ config.output.base_url }}/search_index.json')
 		.then(response => response.json())
 		.then(data => {
 			// Create the MiniSearch instance

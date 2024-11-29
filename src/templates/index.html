@@ -10,7 +10,7 @@
 <ul class="item-table">
     {%- for ns in namespace.namespaces %}
     <li>
-      <a href="{{ namespace.name }}/{{ ns.name }}/index.html" class="item-name">{{ ns.name }}</a>
+      <a href="{{ config.output.base_url }}{{ namespace.name }}/{{ ns.name }}/index.html" class="item-name">{{ ns.name }}</a>
     {% if ns.comment %}
      <div class="item-desc">{{ ns.comment["brief"] }}</div>
      {% endif %}
@@ -25,7 +25,7 @@
   <ul class="item-table">
    {%- for record in namespace.records %}
     <li>
-    <a href="{{ namespace.name }}/record.{{ record.name }}.html" class="item-name">{{ record.name }}</a>
+    <a href="{{ config.output.base_url }}{{ namespace.name }}/record.{{ record.name }}.html" class="item-name">{{ record.name }}</a>
     {% if record.comment %}
      <div class="item-desc">{{ record.comment["brief"] }}</div>
     {% endif %}
@@ -40,9 +40,9 @@
    {%- for func in namespace.functions %}
    <li>
      {% if func.name == "operator/" %}
-     <a href="{{ namespace.name }}/function.operatorslash.html" class="item-name">operator/</a>
+     <a href="{{ config.output.base_url }}{{ namespace.name }}/function.operatorslash.html" class="item-name">operator/</a>
      {% else %}
-     <a href="{{ namespace.name }}/function.{{ func.name }}.html" class="item-name">{{ func.name }}</a>
+     <a href="{{ config.output.base_url }}{{ namespace.name }}/function.{{ func.name }}.html" class="item-name">{{ func.name }}</a>
      {% endif %}
     {% if func.comment %}
      <div class="item-desc">{{ func.comment["brief"] }}</div>
@@ -58,7 +58,7 @@
   <ul class="item-table">
    {%- for enum in namespace.enums %}
     <li>
-    <a href="{{ namespace.name }}/enum.{{ enum.name }}.html" class="item-name">{{ enum.name }}</a>
+    <a href="{{ config.output.base_url }}{{ namespace.name }}/enum.{{ enum.name }}.html" class="item-name">{{ enum.name }}</a>
     {% if enum.comment %}
      <div class="item-desc">{{ enum.comment["brief"] }}</div>
     {% endif %}
@@ -72,7 +72,7 @@
   <ul class="item-table">
    {%- for alias in namespace.aliases %}
     <li>
-    <a href="{{ namespace.name }}/alias.{{ alias.name }}.html" class="item-name">{{ alias.name }}</a>
+    <a href="{{ config.output.base_url }}{{ namespace.name }}/alias.{{ alias.name }}.html" class="item-name">{{ alias.name }}</a>
     {% if alias.comment %}
      <div class="item-desc">{{ alias.comment["brief"] }}</div>
     {% endif %}
