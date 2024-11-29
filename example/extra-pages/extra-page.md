@@ -16,6 +16,6 @@ flowchart LR
   B -->|No| D[Stop]
 ```
 
-In markdown, it is possible to link structs: See [`ExampleStruct`](::ExampleStruct)
+In Markdown, it is possible to link documentation objects: See [`MyStruct`](::MyStruct)
 
 See this too: [`OtherStruct`](::OtherStruct)
