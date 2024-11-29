@@ -7,19 +7,19 @@
   },
   {
     "id": 1,
-    "name": "MyStruct",
-    "link": "record.MyStruct",
-    "kind": "record"
-  },
-  {
-    "id": 2,
     "name": "function",
     "link": "function.function",
     "kind": "function"
   },
   {
+    "id": 2,
+    "name": "MyStruct",
+    "link": "record.MyStruct",
+    "kind": "record"
+  },
+  {
     "id": 3,
-    "name": "Getting Started",
+    "name": "Extra Page",
     "link": "extra-pages/getting_started.md",
     "kind": "page"
   }
