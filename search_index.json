@@ -1,14 +1,14 @@
 [
   {
     "id": 0,
-    "name": "MyStruct",
-    "link": "record.MyStruct",
+    "name": "OtherStruct",
+    "link": "record.OtherStruct",
     "kind": "record"
   },
   {
     "id": 1,
-    "name": "OtherStruct",
-    "link": "record.OtherStruct",
+    "name": "MyStruct",
+    "link": "record.MyStruct",
     "kind": "record"
   },
   {
