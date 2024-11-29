@@ -1,5 +1,5 @@
 # Configuration options
-The configuration file is a TOML file with the following sections:
+The configuration file is a TOML file named `config.toml` with the following sections:
 
 ## `project`
 - `name`: Project name.
@@ -9,7 +9,6 @@ The configuration file is a TOML file with the following sections:
 - `glob`: Glob to use for finding documented files.
 - `compiler_arguments`: List of arguments to pass to libclang while parsing code.
 
-
 ## `output`
 - `static_dir`: Path to a directory containing static files that will be copied in the output directory, this is where `style.css` will typically be located.
 - `path`: Path to the output directory.
@@ -18,7 +17,7 @@ The configuration file is a TOML file with the following sections:
 
 ## `pages`
 - `index` (optional): Markdown file to use as the index file, if an index page is not specified, the root namespace's comment will be used instead.
-- `extra` (optional): List of file paths to serve as extra documentation pages.
+- `extra` (optional): List of file paths to serve as extra documentation pages. These may be globs.
 
 ## `doctests` (optional)
 - `enable`: Whether to enable documentation tests or not.
@@ -51,4 +50,3 @@ enable = false
 run = true
 compiler_invocation = ["clang++", "{file}", "-o", "{out}", "-Iinclude", "-std=c++20"]
 ```
-

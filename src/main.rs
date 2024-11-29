@@ -3,7 +3,7 @@ use glob::glob;
 use indicatif::{ProgressBar, ProgressStyle};
 use render::get_path_for_name;
 use serde::Serialize;
-use std::time::Duration;
+use std::{path::Path, time::Duration};
 
 mod comment;
 mod config;
@@ -13,7 +13,7 @@ mod render;
 mod report;
 mod templates;
 
-use report::report_error;
+use report::{report_error, report_warning};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -75,17 +75,17 @@ fn main() {
             let bar = ProgressBar::new_spinner();
 
             for file in glob(&config.input.glob).expect("Failed to read glob pattern") {
-                let file = match file {
-                    Ok(file) => file,
+                match file {
+                    Ok(file) => {
+                        bar.set_message(format!("Parsing {}", file.to_str().unwrap()));
+                        parser.parse(&config, file.to_str().unwrap(), &mut output);
+                        bar.tick();
+                    },
                     Err(e) => {
-                        report_error(&format!("Error reading file: {}", e));
-                        std::process::exit(1);
+                        report_warning(&format!("Error reading input file: {e:}"));
                     }
                 };
 
-                bar.set_message(format!("Parsing {}", file.to_str().unwrap()));
-                parser.parse(&config, file.to_str().unwrap(), &mut output);
-                bar.tick();
             }
 
             bar.finish_and_clear();
@@ -125,25 +125,30 @@ fn main() {
 
             let mut extra_pages = Vec::new();
 
-            for page_path in config.pages.extra.clone().unwrap_or_default() {
-                let page_source = match std::fs::read_to_string(&page_path) {
-                    Ok(source) => source,
-                    Err(e) => {
-                        report_error(&format!("Error reading file: {}", e));
-                        std::process::exit(1);
-                    }
-                };
-
-                let mut page =
-                    render::process_markdown(&page_source, &output.index, &mut doctests, &config);
-
-                if page.title.is_empty() {
-                    page.title = page_path.split("/").last().unwrap().to_string();
+            for g in &config.pages.extra.clone().unwrap_or_default() {
+                for file in glob(g).expect("Failed to read glob pattern") {
+                    match file {
+                        Ok(page_path) => {
+                            match std::fs::read_to_string(&page_path) {
+                                Ok(source) => {
+                                    let mut page =
+                                        render::process_markdown(&source, &output.index, &mut doctests, &config);
+                                    if page.title.is_empty() {
+                                        page.title = page_path.file_name().unwrap().to_string_lossy().into_owned();
+                                    }
+                                    page.path = page_path;
+                                    extra_pages.push(page);
+                                },
+                                Err(e) => {
+                                    report_warning(&format!("Error reading extra file “{page_path:?}”: {e}"));
+                                }
+                            };
+                        },
+                        Err(e) => {
+                            report_warning(&format!("Error reading extra file “{g}”: {e}"));
+                        }
+                    };
                 }
-
-                page.path = page_path.to_string();
-
-                extra_pages.push(page);
             }
 
             let pages = Pages {
@@ -192,13 +197,8 @@ fn main() {
                 .unwrap();
 
             for page in &pages.extra {
-                let path = page.path.split("/").collect::<Vec<&str>>();
-                std::fs::create_dir_all(format!(
-                    "{}/{}",
-                    config.output.path,
-                    path[..path.len() - 1].join("/")
-                ))
-                .map_err(|e| {
+                let path = Path::new(&config.output.path).join(page.path.parent().unwrap_or_else(|| &Path::new("")));
+                std::fs::create_dir_all(path).map_err(|e| {
                     report_error(&format!("Error creating output directory: {}", e));
                     std::process::exit(1);
                 })
@@ -217,7 +217,7 @@ fn main() {
                 context.insert("title", &page.title);
 
                 std::fs::write(
-                    format!("{}/{}.html", config.output.path, page.path),
+                    format!("{}/{}.html", config.output.path, page.path.display()),
                     tera.render("docpage", &context).unwrap(),
                 )
                 .map_err(|e| {
@@ -284,7 +284,7 @@ fn main() {
                 index.push(SearchIndex {
                     id,
                     name: page.title.clone(),
-                    link: page.path.clone(),
+                    link: page.path.to_string_lossy().into_owned(),
                     kind: "page".to_string(),
                 });
 
