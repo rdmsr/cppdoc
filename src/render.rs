@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::doctest;
 use crate::parser;
+use crate::report::report_warning;
 
 use serde::Serialize;
 use std::collections::HashMap;
@@ -95,12 +96,15 @@ pub fn process_markdown(
                 }
 
                 // Pygmentize was chosen over syntect because it has way more themes and is customizable through a CSS stylesheet
-                let html =
-                    pygmentize::highlight(&code, Some(&code_lang), &HtmlFormatter::new()).unwrap();
-
+                let ret = match pygmentize::highlight(&code, Some(&code_lang), &HtmlFormatter::new()) {
+                    Ok(html) => Some(Event::Html(html.into())),
+                    Err(_) => {
+                        report_warning(&format!("Unable to create syntax highlighting for “{code_lang}” code block"));
+                        Some(Event::Code(code.clone().into()))
+                    },
+                };
                 code.clear();
-
-                Some(Event::Html(html.into()))
+                ret
             }
         }
 
