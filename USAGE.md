@@ -97,11 +97,10 @@ Therefore, it is possible to write code like so:
 
 ```c++
 int a = 1;
-
 ASSERT(a == 1);
 ```
 
-The code above will compile and run successfuly, but the following code will fail to run:
+The code above will compile and run successfully, but the following code will fail to run:
 
 ```c++
 int a = 2;
