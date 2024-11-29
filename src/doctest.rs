@@ -61,7 +61,9 @@ impl Doctest {
     }
 
     pub fn compile(&self, config: &config::Doctest) -> std::path::PathBuf {
-        let compiler_invocation = config.compiler_invocation.join(" ");
+        // This is fine, this should never panic
+        let compiler_invocation = config.compiler_invocation.clone().unwrap();
+        let compiler_invocation = compiler_invocation.join(" ");
 
         let mut in_file = tempfile::Builder::new().suffix(".cpp").tempfile().unwrap();
 

@@ -159,10 +159,20 @@ fn main() {
                         ProgressStyle::with_template("Running doctest {pos}/{len}").unwrap(),
                     );
 
+                    if let None = doctest_conf.run {
+                        report_error("Doctests enabled but no run option specified");
+                        std::process::exit(1);
+                    }
+
+                    if let None = doctest_conf.compiler_invocation {
+                        report_error("Doctests enabled but no compiler invocation specified");
+                        std::process::exit(1);
+                    }
+
                     for doc in doctests {
                         let out = doc.compile(doctest_conf);
 
-                        if doctest_conf.run {
+                        if doctest_conf.run.unwrap() {
                             doc.run(out);
                         }
 

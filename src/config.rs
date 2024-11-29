@@ -39,8 +39,8 @@ pub struct Output {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Doctest {
     pub enable: bool,
-    pub run: bool,
-    pub compiler_invocation: Vec<String>,
+    pub run: Option<bool>,
+    pub compiler_invocation: Option<Vec<String>>,
 }
 
 impl Config {
