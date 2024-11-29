@@ -110,7 +110,7 @@ fn main() {
 
             let mut doctests = Vec::new();
 
-            render::process_namespace(root_namespace, &output.index, &mut doctests);
+            render::process_namespace(root_namespace, &output.index, &mut doctests, &config);
 
             let index = match config.pages.index {
                 Some(ref x) => std::fs::read_to_string(x).unwrap(),
@@ -120,7 +120,8 @@ fn main() {
                 },
             };
 
-            let index_html = render::process_markdown(&index, &output.index, &mut doctests);
+            let index_html =
+                render::process_markdown(&index, &output.index, &mut doctests, &config);
 
             let mut extra_pages = Vec::new();
 
@@ -133,7 +134,8 @@ fn main() {
                     }
                 };
 
-                let mut page = render::process_markdown(&page_source, &output.index, &mut doctests);
+                let mut page =
+                    render::process_markdown(&page_source, &output.index, &mut doctests, &config);
 
                 if page.title.is_empty() {
                     page.title = page_path.split("/").last().unwrap().to_string();

@@ -8,7 +8,7 @@ compiler_arguments = ["-Iinclude", "-std=gnu++20", "-xc++"]
 
 [pages]
 index = "README.md"
-extra = ["extra-pages/getting_started.md"]
+extra = ["extra-pages/extra-page.md"]
 
 [output]
 static_dir = "static"

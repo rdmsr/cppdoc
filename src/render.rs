@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::doctest;
 use crate::parser;
 
@@ -47,6 +48,7 @@ pub fn process_markdown(
     input: &str,
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
+    config: &Config,
 ) -> Page {
     let mut code = String::new();
     let mut in_code_block = false;
@@ -146,7 +148,9 @@ pub fn process_markdown(
                     let real = get_path_for_name(url, index);
 
                     if let Some(real) = real {
-                        return Some(Event::Html(format!("<a href=\"/{}.html\">", real).into()));
+                        return Some(Event::Html(
+                            format!("<a href=\"{}/{}.html\">", config.output.base_url, real).into(),
+                        ));
                     }
                 }
             }
@@ -177,10 +181,12 @@ pub fn process_function(
     func: &mut parser::Function,
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
+    config: &Config,
 ) {
     if let Some(ref mut comment) = &mut func.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests).content;
-        comment.description = process_markdown(&comment.description, index, doctests).content;
+        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
+        comment.description =
+            process_markdown(&comment.description, index, doctests, config).content;
     }
 }
 
@@ -188,10 +194,12 @@ pub fn process_enum(
     enm: &mut parser::Enum,
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
+    config: &Config,
 ) {
     if let Some(ref mut comment) = &mut enm.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests).content;
-        comment.description = process_markdown(&comment.description, index, doctests).content;
+        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
+        comment.description =
+            process_markdown(&comment.description, index, doctests, config).content;
     }
 }
 
@@ -199,18 +207,20 @@ pub fn process_record(
     record: &mut parser::Record,
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
+    config: &Config,
 ) {
     if let Some(ref mut comment) = &mut record.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests).content;
-        comment.description = process_markdown(&comment.description, index, doctests).content;
+        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
+        comment.description =
+            process_markdown(&comment.description, index, doctests, config).content;
     }
 
     for method in &mut record.methods {
-        process_function(method, index, doctests);
+        process_function(method, index, doctests, config);
     }
 
     for ctor in &mut record.ctor {
-        process_function(ctor, index, doctests);
+        process_function(ctor, index, doctests, config);
     }
 }
 
@@ -218,25 +228,27 @@ pub fn process_namespace(
     namespace: &mut parser::Namespace,
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
+    config: &Config,
 ) {
     if let Some(ref mut comment) = &mut namespace.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests).content;
-        comment.description = process_markdown(&comment.description, index, doctests).content;
+        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
+        comment.description =
+            process_markdown(&comment.description, index, doctests, config).content;
     }
 
     for func in &mut namespace.functions {
-        process_function(func, index, doctests);
+        process_function(func, index, doctests, config);
     }
 
     for record in &mut namespace.records {
-        process_record(record, index, doctests);
+        process_record(record, index, doctests, config);
     }
 
     for enm in &mut namespace.enums {
-        process_enum(enm, index, doctests);
+        process_enum(enm, index, doctests, config);
     }
 
     for ns in &mut namespace.namespaces {
-        process_namespace(ns, index, doctests);
+        process_namespace(ns, index, doctests, config);
     }
 }
