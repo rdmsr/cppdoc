@@ -1,5 +1,5 @@
 # Configuration options
-The configuration file is a TOML file named `config.toml` with the following sections:
+The configuration file is a TOML file named `cppdoc.toml` with the following sections:
 
 ## `project`
 - `name`: Project name.
