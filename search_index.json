@@ -1,9 +1,9 @@
 [
   {
     "id": 0,
-    "name": "OtherStruct",
-    "link": "record.OtherStruct",
-    "kind": "record"
+    "name": "function",
+    "link": "function.function",
+    "kind": "function"
   },
   {
     "id": 1,
@@ -13,9 +13,9 @@
   },
   {
     "id": 2,
-    "name": "function",
-    "link": "function.function",
-    "kind": "function"
+    "name": "OtherStruct",
+    "link": "record.OtherStruct",
+    "kind": "record"
   },
   {
     "id": 3,
