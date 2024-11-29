@@ -4,6 +4,7 @@ use crate::parser;
 
 use serde::Serialize;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use pulldown_cmark::{CodeBlockKind, Event, Tag, TagEnd};
 use pygmentize::HtmlFormatter;
@@ -12,7 +13,7 @@ use pygmentize::HtmlFormatter;
 pub struct Page {
     pub title: String,
     pub content: String,
-    pub path: String,
+    pub path: PathBuf,
 }
 
 pub fn get_path_for_name(name: &str, index: &HashMap<String, String>) -> Option<String> {
@@ -173,7 +174,7 @@ pub fn process_markdown(
     Page {
         content: html_output,
         title,
-        path: "".to_string(),
+        path: PathBuf::new()
     }
 }
 
