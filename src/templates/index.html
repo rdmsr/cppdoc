@@ -42,7 +42,7 @@
      {% if func.name == "operator/" %}
      <a href="{{ config.output.base_url }}{{ namespace.name }}/function.operatorslash.html" class="item-name">operator/</a>
      {% else %}
-     <a href="{{ config.output.base_url }}{{ namespace.name }}/function.{{ func.name }}.html" class="item-name">{{ func.name }}</a>
+     <a href="{{ config.output.base_url }}{{ namespace.name }}/function.{{ func.name }}.html" class="item-name">{{ func.name }}</a>
      {% endif %}
     {% if func.comment %}
      <div class="item-desc">{{ func.comment["brief"] }}</div>
