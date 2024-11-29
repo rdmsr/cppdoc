@@ -16,6 +16,6 @@ path = "docs"
 base_url = "/cppdoc"
 
 [doctests]
-enable = true 
+enable = false 
 run = true
 compiler_invocation = ["clang++", "{file}", "-o", "{out}", "-Iinclude", "-std=c++20"]
