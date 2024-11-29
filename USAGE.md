@@ -81,7 +81,7 @@ Will only display:
 int a = 1;
 ```
 
-Notice that documentation tests don't need a `main` function, this is because documentation tests run by default in `main`, to disable this behavior one must set the codeblock language to `nomain` instead of `c++` or `cpp`.
+Notice that documentation tests don't need a `main` function, this is because documentation tests run by default in `main`. To disable this behavior one must set the codeblock language to `nomain` instead of `c++` or `cpp`.
 
 
 ### Test framework
