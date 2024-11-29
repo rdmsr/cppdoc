@@ -26,24 +26,24 @@ const
  <div class="sidebar" role="navigation" aria-label="Main">
     <div class="sidebarwrapper">
       <h1>{{ project.name }}</h1>
-      <form action="/search.html" method="get">
+      <form action="{{ config.output.base_url }}/search.html" method="get">
         <input class="searchbar" type="text" name="query" placeholder="Search...">
       </form>
       <h2> Pages </h2>
       <ul>
-        <li><a href="/index.html">Index</a></li>
+        <li><a href="{{ config.output.base_url }}/index.html">Index</a></li>
         {% for page in pages['extra'] %}
-        <li><a href="/{{ page['path'] }}.html">{{ page['title'] }}</a></li>
+        <li><a href="{{ config.output.base_url }}/{{ page['path'] }}.html">{{ page['title'] }}</a></li>
         {% endfor%}
       </ul>
 
       <h2> Reference </h2>
       <ul>
-        <li><a href="/index.html#functions">Functions</a></li>
-        <li><a href="/index.html#namespaces">Namespaces</a></li>
-        <li><a href="/index.html#records">Records</a></li>
-        <li><a href="/index.html#concepts">Concepts</a></li>
-        <li><a href="/index.html#enums">Enums</a></li>
+        <li><a href="{{ config.output.base_url }}/index.html#functions">Functions</a></li>
+        <li><a href="{{ config.output.base_url }}/index.html#namespaces">Namespaces</a></li>
+        <li><a href="{{ config.output.base_url }}/index.html#records">Records</a></li>
+        <li><a href="{{ config.output.base_url }}/index.html#concepts">Concepts</a></li>
+        <li><a href="{{ config.output.base_url }}/index.html#enums">Enums</a></li>
       </ul>
     </div>
   </div>

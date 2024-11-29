@@ -13,6 +13,7 @@ extra = ["extra-pages/getting_started.md"]
 [output]
 static_dir = "static"
 path = "docs"
+base_url = "/cppdoc"
 
 [doctests]
 enable = true 

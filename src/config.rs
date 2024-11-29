@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
     pub project: Project,
     pub input: Input,
@@ -10,32 +10,33 @@ pub struct Config {
     pub doctests: Option<Doctest>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Project {
     pub name: String,
     pub version: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Input {
     pub glob: String,
     pub compiler_arguments: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Pages {
     pub index: Option<String>,
     pub extra: Option<Vec<String>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Output {
     pub static_dir: String,
     pub path: String,
     pub root_namespace: Option<String>,
+    pub base_url: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Doctest {
     pub enable: bool,
     pub run: bool,

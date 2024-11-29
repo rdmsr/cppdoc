@@ -193,9 +193,10 @@ fn main() {
                 .unwrap();
             }
 
-            let tera = templates::init(&output.index);
+            let tera = templates::init(&output.index, &config);
             let mut context = tera::Context::new();
 
+            context.insert("config", &config);
             context.insert("project", &config.project);
             context.insert("pages", &pages);
 

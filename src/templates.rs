@@ -19,11 +19,11 @@ const ALIAS_TEMPLATE: &str = include_str!("templates/alias.html");
 
 fn cleanup_type(type_: &str) -> String {
     // Lmao
-    
+
     type_.replace(" &", "</span>&").replace(" *", "</span>*")
 }
 
-fn tera_output_template(index: HashMap<String, String>) -> impl tera::Function {
+fn tera_output_template(index: HashMap<String, String>, config: Config) -> impl tera::Function {
     Box::new(
         move |args: &HashMap<String, tera::Value>| -> tera::Result<tera::Value> {
             let templ = args.get("template").unwrap().as_object().unwrap();
@@ -39,7 +39,7 @@ fn tera_output_template(index: HashMap<String, String>) -> impl tera::Function {
                 let type_ = param.get("type").unwrap().as_str().unwrap();
                 prefix.push_str(&format!(
                     "{} {}",
-                    get_link_for_type(type_, namespace, &index)
+                    get_link_for_type(type_, namespace, &config, &index)
                         .unwrap_or(format!("<span class=\"kt\">{}</span>", cleanup_type(type_))),
                     param.get("name").unwrap().as_str().unwrap()
                 ));
@@ -113,7 +113,7 @@ fn tera_get_link_for_namespace(index: HashMap<String, String>) -> impl tera::Fun
     )
 }
 
-fn tera_output_struct(index: HashMap<String, String>) -> impl tera::Function {
+fn tera_output_struct(index: HashMap<String, String>, config: Config) -> impl tera::Function {
     Box::new(
         move |args: &HashMap<String, tera::Value>| -> tera::Result<tera::Value> {
             let struct_ = args.get("struct").unwrap().as_object().unwrap();
@@ -143,7 +143,7 @@ fn tera_output_struct(index: HashMap<String, String>) -> impl tera::Function {
                     listing.push_str("  ");
                     listing.push_str(&format!(
                         "{} {};",
-                        get_link_for_type(type_, namespace, &index).unwrap_or(format!(
+                        get_link_for_type(type_, namespace, &config, &index).unwrap_or(format!(
                             "<span class=\"kt\">{}</span>",
                             cleanup_type(type_)
                         )),
@@ -202,7 +202,7 @@ fn tera_output_struct(index: HashMap<String, String>) -> impl tera::Function {
     )
 }
 
-pub fn init(index: &HashMap<String, String>) -> Tera {
+pub fn init(index: &HashMap<String, String>, config: &Config) -> Tera {
     let mut tera = Tera::default();
     tera.add_raw_templates(vec![
         ("macros", MACROS),
@@ -218,9 +218,18 @@ pub fn init(index: &HashMap<String, String>) -> Tera {
     ])
     .unwrap();
 
-    tera.register_function("link_for_type", tera_get_url_for(index.clone()));
-    tera.register_function("output_template", tera_output_template(index.clone()));
-    tera.register_function("output_struct", tera_output_struct(index.clone()));
+    tera.register_function(
+        "link_for_type",
+        tera_get_url_for(index.clone(), config.clone()),
+    );
+    tera.register_function(
+        "output_template",
+        tera_output_template(index.clone(), config.clone()),
+    );
+    tera.register_function(
+        "output_struct",
+        tera_output_struct(index.clone(), config.clone()),
+    );
     tera.register_function(
         "get_link_for_namespace",
         tera_get_link_for_namespace(index.clone()),
@@ -251,6 +260,7 @@ pub fn output_function(
     context.insert("function", function);
     context.insert("pages", &pages);
     context.insert("project", &config.project);
+    context.insert("config", &config);
 
     let path = format!(
         "{}/{}/function.{}.html",
@@ -269,6 +279,7 @@ pub fn output_function(
 fn get_link_for_type(
     name: &str,
     curr_namespace: &str,
+    config: &Config,
     index: &HashMap<String, String>,
 ) -> Option<String> {
     let cleaned_name = name.trim_start_matches("const ");
@@ -310,7 +321,7 @@ fn get_link_for_type(
 
         for (i, param) in type_params.iter().enumerate() {
             let param = param.trim();
-            let link = get_link_for_type(param, curr_namespace, index);
+            let link = get_link_for_type(param, curr_namespace, config, index);
 
             if let Some(link) = link {
                 ret.push_str(&link);
@@ -327,7 +338,7 @@ fn get_link_for_type(
 
         return Some(format!(
             "{}&lt;{}&gt;{}",
-            get_link_for_type(type_name, curr_namespace, index).unwrap_or_else(|| format!(
+            get_link_for_type(type_name, curr_namespace, config, index).unwrap_or_else(|| format!(
                 "<span class=\"kt\">{}</span>",
                 cleanup_type(type_name)
             )),
@@ -343,8 +354,8 @@ fn get_link_for_type(
 
         if let Some(ret) = ret {
             return Some(format!(
-                "<a href=\"/{}.html\"><span class=\"kt\">{}</span></a>{}",
-                ret, name_without_suffix, suffix
+                "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+                config.output.base_url, ret, name_without_suffix, suffix
             ));
         }
     }
@@ -354,8 +365,8 @@ fn get_link_for_type(
 
     if let Some(ret) = ret {
         return Some(format!(
-            "<a href=\"/{}.html\"><span class=\"kt\">{}</span></a>{}",
-            ret, name_without_suffix, suffix
+            "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+            config.output.base_url, ret, name_without_suffix, suffix
         ));
     }
 
@@ -364,8 +375,8 @@ fn get_link_for_type(
 
     if let Some(ret) = ret {
         return Some(format!(
-            "<a href=\"/{}.html\"><span class=\"kt\">{}</span></a>{}",
-            ret, name_without_suffix, suffix
+            "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+            config.output.base_url, ret, name_without_suffix, suffix
         ));
     }
 
@@ -378,8 +389,8 @@ fn get_link_for_type(
 
         if let Some(ret) = ret {
             return Some(format!(
-                "<a href=\"/{}.html\"><span class=\"kt\">{}</span></a>{}",
-                ret, name_without_suffix, suffix
+                "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+                config.output.base_url, ret, name_without_suffix, suffix
             ));
         }
 
@@ -389,7 +400,7 @@ fn get_link_for_type(
     None
 }
 
-fn tera_get_url_for(index: HashMap<String, String>) -> impl tera::Function {
+fn tera_get_url_for(index: HashMap<String, String>, config: Config) -> impl tera::Function {
     Box::new(
         move |args: &HashMap<String, tera::Value>| -> tera::Result<tera::Value> {
             let the_type = args.get("type").unwrap();
@@ -418,7 +429,7 @@ fn tera_get_url_for(index: HashMap<String, String>) -> impl tera::Function {
                     let namespace = format!("{}{}{}", namespace, parent_ns, parent_name);
 
                     // Prioritize parent namespace
-                    if let Some(ret) = get_link_for_type(the_type, &namespace, &index) {
+                    if let Some(ret) = get_link_for_type(the_type, &namespace, &config, &index) {
                         return Ok(tera::to_value(ret).unwrap());
                     }
                 }
@@ -427,6 +438,7 @@ fn tera_get_url_for(index: HashMap<String, String>) -> impl tera::Function {
             match get_link_for_type(
                 the_type.as_str().unwrap(),
                 namespace.as_str().unwrap(),
+                &config,
                 &index,
             ) {
                 Some(x) => Ok(tera::to_value(x).unwrap()),
@@ -466,6 +478,7 @@ pub fn output_record(
                 get_link_for_type(
                     &param.type_,
                     record.namespace.clone().unwrap_or_default().as_str(),
+                    config,
                     index
                 )
                 .unwrap_or(format!(
@@ -501,11 +514,16 @@ pub fn output_record(
                     listing.push_str("  ");
                     listing.push_str(&format!(
                         "  {} {};\n",
-                        get_link_for_type(struct_field.type_.as_str(), ns_name.as_str(), index)
-                            .unwrap_or(format!(
-                                "<span class=\"kt\">{}</span>",
-                                cleanup_type(&struct_field.type_)
-                            )),
+                        get_link_for_type(
+                            struct_field.type_.as_str(),
+                            ns_name.as_str(),
+                            config,
+                            index
+                        )
+                        .unwrap_or(format!(
+                            "<span class=\"kt\">{}</span>",
+                            cleanup_type(&struct_field.type_)
+                        )),
                         struct_field.name
                     ));
                 }
@@ -523,10 +541,9 @@ pub fn output_record(
         }
         listing.push_str(&format!(
             "  {} {};\n",
-            get_link_for_type(field.type_.as_str(), ns_name.as_str(), index).unwrap_or(format!(
-                "<span class=\"kt\">{}</span>",
-                cleanup_type(&field.type_)
-            )),
+            get_link_for_type(field.type_.as_str(), ns_name.as_str(), config, index).unwrap_or(
+                format!("<span class=\"kt\">{}</span>", cleanup_type(&field.type_))
+            ),
             field.name
         ));
     }
@@ -592,6 +609,7 @@ pub fn output_record(
 
     context.insert("record", record);
     context.insert("pages", &pages);
+    context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("listing", &listing);
 
@@ -621,7 +639,7 @@ fn output_alias(
     let listing = format!(
         "<span class=\"k\">using</span> {} = {}",
         alias.name,
-        get_link_for_type(alias.type_.as_str(), &ns_name, index).unwrap_or(format!(
+        get_link_for_type(alias.type_.as_str(), &ns_name, config, index).unwrap_or(format!(
             "<span class=\"kt\">{}</span>",
             cleanup_type(&alias.type_)
         )),
@@ -645,6 +663,7 @@ fn output_alias(
 
     context.insert("alias", alias);
     context.insert("pages", &pages);
+    context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("listing", &listing);
 
@@ -708,6 +727,7 @@ fn output_enum(
 
     context.insert("enum", enum_);
     context.insert("pages", &pages);
+    context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("listing", &listing);
 
@@ -740,6 +760,7 @@ pub fn output_namespace(
     };
 
     context.insert("namespace", namespace);
+    context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("pages", &pages);
 
