@@ -19,3 +19,6 @@ serde_json = "1.0.132"
 tempfile = "3.14.0"
 tera = "1.20.0"
 toml = "0.8.19"
+
+[profile.release]
+lto = true
