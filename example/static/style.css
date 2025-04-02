@@ -182,7 +182,7 @@ div.sidebar a {
     border-radius: 2px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     div.sidebar {
         float: none;
         width: 100%;
