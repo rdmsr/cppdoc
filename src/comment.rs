@@ -17,15 +17,25 @@ pub fn parse_comment(string: String) -> Comment {
 
     let mut lines = string.lines();
 
-    if let Some(line) = lines.next() {
+    let mut brief = String::new();
+    while let Some(line) = lines.next() {
         let trimmed = line.trim();
+        if trimmed.is_empty() {
+            break;
+        }
+
+        if !brief.is_empty() {
+            brief.push(' ');
+        }
 
         if trimmed.starts_with("///<") {
-            ret.brief = remove_prefix_and_clean(trimmed, "///<");
+            brief.push_str(&remove_prefix_and_clean(trimmed, "///<"));
         } else {
-            ret.brief = remove_prefix_and_clean(trimmed, "///");
+            brief.push_str(&remove_prefix_and_clean(trimmed, "///"));
         }
     }
+
+    ret.brief = brief;
 
     let description = lines.fold(String::new(), |mut acc, line| {
         let cleaned_up = remove_prefix_and_clean(line.trim(), "///");
