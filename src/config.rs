@@ -34,6 +34,16 @@ pub struct Output {
     pub path: String,
     pub root_namespace: Option<String>,
     pub base_url: String,
+    #[serde(default = "bool_true")]
+    pub enable_mermaid: bool,
+    #[serde(default)]
+    pub bundle_mermaid: bool,
+    #[serde(default)]
+    pub bundle_minisearch: bool,
+}
+
+fn bool_true() -> bool {
+    true
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
