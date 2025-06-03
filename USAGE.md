@@ -29,6 +29,15 @@ enum MyEnum {
 
 Comments content are parsed as cppdoc-flavored markdown, there is no support for `javadoc`/Doxygen-style comments.
 
+### Hiding nodes
+
+Nodes can be hidden by annotating them with `/// #[doc(hidden)]`
+
+```cpp
+/// #[doc(hidden)]
+struct Hidden {}
+```
+
 ## Markdown syntax
 `cppdoc` introduces a few extensions to markdown.
 
