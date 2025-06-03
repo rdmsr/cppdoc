@@ -151,7 +151,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_function(&self, node: clang::Entity) -> Function {
+    fn parse_function(&self, node: clang::Entity) -> Option<Function> {
         let mut ret = Function {
             name: node.get_name().unwrap(),
             return_type: node.get_result_type().unwrap().get_display_name(),
@@ -170,7 +170,12 @@ impl<'a> Parser<'a> {
         // Handle function names with quotes, like operator"", so that links don't fuck up
         ret.name = ret.name.replace("\"", "&quot");
 
-        if let Some(c) = node.get_comment() { ret.comment = Some(comment::parse_comment(c)); }
+        if let Some(c) = node.get_comment() {
+            ret.comment = comment::parse_comment(c);
+            if ret.comment.is_none() {
+                return None;
+            }   
+        }
 
         for c in node
             .get_children()
@@ -190,10 +195,10 @@ impl<'a> Parser<'a> {
             ret.template = Some(self.parse_template(node));
         }
 
-        ret
+        Some(ret)
     }
 
-    fn parse_record(&self, node: clang::Entity) -> Record {
+    fn parse_record(&self, node: clang::Entity) -> Option<Record> {
         let mut ret = Record {
             name: node.get_name().unwrap(),
             fields: Vec::new(),
@@ -215,7 +220,12 @@ impl<'a> Parser<'a> {
             nested: None,
         };
 
-        if let Some(c) = node.get_comment() { ret.comment = Some(comment::parse_comment(c)); }
+        if let Some(c) = node.get_comment() {
+            ret.comment = comment::parse_comment(c);
+            if ret.comment.is_none() {
+                return None;
+            }   
+        }
 
         if node.get_kind() == clang::EntityKind::ClassTemplate {
             ret.template = Some(self.parse_template(node));
@@ -224,10 +234,16 @@ impl<'a> Parser<'a> {
         for c in node.get_children().iter() {
             match c.get_kind() {
                 clang::EntityKind::FieldDecl => if let Some(clang::Accessibility::Public) = c.get_accessibility() {
+                    let comment = if let Some(comment) = node.get_comment() {
+                        comment::parse_comment(comment)
+                    } else {
+                        None
+                    };
+
                     let mut field = Field {
                         name: c.get_name().unwrap_or_default(),
                         type_: c.get_type().unwrap().get_display_name(),
-                        comment: c.get_comment().map(comment::parse_comment),
+                        comment,
                         struct_: None,
                     };
 
@@ -238,7 +254,7 @@ impl<'a> Parser<'a> {
                                 .iter()
                                 .find(|c| c.get_kind() == clang::EntityKind::StructDecl)
                                 .unwrap(),
-                        );
+                        )?;
 
                         field.type_ = "struct".to_string();
                         field.struct_ = Some(NestedField::Record(ret_struct));
@@ -250,7 +266,7 @@ impl<'a> Parser<'a> {
                                 .iter()
                                 .find(|c| c.get_kind() == clang::EntityKind::UnionDecl)
                                 .unwrap(),
-                        );
+                        )?;
 
                         field.type_ = "union".to_string();
                         field.struct_ = Some(NestedField::Record(ret_struct));
@@ -262,7 +278,7 @@ impl<'a> Parser<'a> {
                                 .iter()
                                 .find(|c| c.get_kind() == clang::EntityKind::EnumDecl)
                                 .unwrap(),
-                        );
+                        )?;
 
                         field.type_ = "enum".to_string();
                         field.struct_ = Some(NestedField::Enum(ret_enum));
@@ -272,7 +288,7 @@ impl<'a> Parser<'a> {
                 },
 
                 clang::EntityKind::Constructor => {
-                    let mut function = self.parse_function(*c);
+                    let mut function = self.parse_function(*c)?;
                     function.return_type = "".to_string();
 
                     ret.ctor.push(function);
@@ -280,7 +296,7 @@ impl<'a> Parser<'a> {
 
                 clang::EntityKind::Method | clang::EntityKind::FunctionTemplate => {
                     if let Some(clang::Accessibility::Public) = c.get_accessibility() {
-                        let mut function = self.parse_function(*c);
+                        let mut function = self.parse_function(*c)?;
                         function.namespace = Some(ret.name.clone());
 
                         ret.methods.push(function);
@@ -291,7 +307,7 @@ impl<'a> Parser<'a> {
                 | clang::EntityKind::ClassDecl
                 | clang::EntityKind::UnionDecl
                 | clang::EntityKind::ClassTemplate => {
-                    let mut record = self.parse_record(*c);
+                    let mut record = self.parse_record(*c)?;
 
                     if !record.name.starts_with("(anonymous")
                         && !record.name.starts_with("(unnamed")
@@ -307,7 +323,7 @@ impl<'a> Parser<'a> {
                 }
 
                 clang::EntityKind::EnumDecl => {
-                    let mut enum_ = self.parse_enum(*c);
+                    let mut enum_ = self.parse_enum(*c)?;
 
                     if !enum_.name.starts_with("(anonymous") && !enum_.name.starts_with("(unnamed")
                     {
@@ -327,10 +343,10 @@ impl<'a> Parser<'a> {
             }
         }
 
-        ret
+        Some(ret)
     }
 
-    fn parse_enum(&self, node: clang::Entity) -> Enum {
+    fn parse_enum(&self, node: clang::Entity) -> Option<Enum> {
         let mut ret = Enum {
             name: node.get_name().unwrap(),
             comment: None,
@@ -338,20 +354,31 @@ impl<'a> Parser<'a> {
             values: Vec::new(),
         };
 
-        if let Some(c) = node.get_comment() { ret.comment = Some(comment::parse_comment(c)); }
+        if let Some(c) = node.get_comment() {
+            ret.comment = comment::parse_comment(c);
+            if ret.comment.is_none() {
+                return None;
+            }   
+        }
 
         for c in node.get_children().iter() {
             if c.get_kind() == clang::EntityKind::EnumConstantDecl {
+                let comment = if let Some(comment) = node.get_comment() {
+                    comment::parse_comment(comment)
+                } else {
+                    None
+                };
+
                 let value = EnumValue {
                     name: c.get_name().unwrap_or_default(),
-                    comment: c.get_comment().map(comment::parse_comment),
+                    comment,
                 };
 
                 ret.values.push(value);
             }
         }
 
-        ret
+        Some(ret)
     }
 
     fn get_name_for_namespace(name: &str, namespace_name: &str, ns_name_full: &str) -> String {
@@ -381,7 +408,10 @@ impl<'a> Parser<'a> {
 
         match node.get_kind() {
             clang::EntityKind::FunctionDecl | clang::EntityKind::FunctionTemplate => {
-                let mut function = self.parse_function(node);
+                let Some(mut function) = self.parse_function(node) else {
+                    return;
+                };
+
                 function.namespace = Some(current_namespace_name.to_string());
 
                 if let Some(existing) = ns.functions.iter_mut().find(|f| f.name == function.name) {
@@ -406,7 +436,10 @@ impl<'a> Parser<'a> {
             | clang::EntityKind::ClassDecl
             | clang::EntityKind::UnionDecl
             | clang::EntityKind::ClassTemplate => {
-                let mut record = self.parse_record(node);
+                let Some(mut record) = self.parse_record(node) else {
+                    return;
+                };
+
                 record.namespace = Some(current_namespace_name.to_string());
 
                 // If a record already exists, it must be some kind of template specialization/overloading,
@@ -464,7 +497,10 @@ impl<'a> Parser<'a> {
             }
 
             clang::EntityKind::EnumDecl => {
-                let mut enum_ = self.parse_enum(node);
+                let Some(mut enum_) = self.parse_enum(node) else {
+                    return;
+                };
+
                 enum_.namespace = Some(current_namespace_name.to_string());
 
                 index.insert(absolute_name, "enum".to_string());
@@ -473,9 +509,15 @@ impl<'a> Parser<'a> {
 
             clang::EntityKind::Namespace => {
                 let name = node.get_name().unwrap();
+                let comment = if let Some(comment) = node.get_comment() {
+                    comment::parse_comment(comment)
+                } else {
+                    None
+                };
+
                 let mut real_ns = Namespace {
                     name: node.get_name().unwrap(),
-                    comment: node.get_comment().map(comment::parse_comment),
+                    comment,
                     records: Vec::new(),
                     functions: Vec::new(),
                     namespaces: Vec::new(),
@@ -549,11 +591,17 @@ impl<'a> Parser<'a> {
                     type_ = "unknown".to_string();
                 }
 
+                let comment = if let Some(comment) = node.get_comment() {
+                    comment::parse_comment(comment)
+                } else {
+                    None
+                };
+
                 let alias = Alias {
                     namespace: Some(current_namespace_name.to_string()),
                     name: node.get_name().unwrap(),
                     type_,
-                    comment: node.get_comment().map(comment::parse_comment),
+                    comment,
                 };
 
                 index.insert(absolute_name, "alias".to_string());

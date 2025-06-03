@@ -8,7 +8,7 @@ fn remove_prefix_and_clean(string: &str, prefix: &str) -> String {
     }
 }
 
-pub fn parse_comment(string: String) -> Comment {
+pub fn parse_comment(string: String) -> Option<Comment> {
     let mut ret = Comment {
         brief: "".to_string(),
         description: "".to_string(),
@@ -16,6 +16,9 @@ pub fn parse_comment(string: String) -> Comment {
     };
 
     let mut lines = string.lines();
+    if lines.clone().peekable().peek() == Some(&"/// #[doc(hidden)]") {
+        return None;
+    }
 
     let mut brief = String::new();
     while let Some(line) = lines.next() {
@@ -58,5 +61,5 @@ pub fn parse_comment(string: String) -> Comment {
 
     ret.description = description.trim().to_string();
 
-    ret
+    Some(ret)
 }
