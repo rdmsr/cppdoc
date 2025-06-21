@@ -1,15 +1,15 @@
 [
   {
     "id": 0,
-    "name": "function",
-    "link": "function.function",
-    "kind": "function"
-  },
-  {
-    "id": 1,
     "name": "MyStruct",
     "link": "record.MyStruct",
     "kind": "record"
+  },
+  {
+    "id": 1,
+    "name": "function",
+    "link": "function.function",
+    "kind": "function"
   },
   {
     "id": 2,
