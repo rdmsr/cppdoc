@@ -104,6 +104,8 @@ pub fn process_markdown(
                         Some(Event::Code(code.clone().into()))
                     },
                 };
+
+                in_code_block = false;
                 code.clear();
                 ret
             }
@@ -170,6 +172,7 @@ pub fn process_markdown(
 
         Event::End(TagEnd::Link {}) => Some(Event::Html("</a>".into())),
 
+      
         _ => Some(event),
     });
 
