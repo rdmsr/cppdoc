@@ -99,8 +99,8 @@ pub fn process_markdown(
                 // Pygmentize was chosen over syntect because it has way more themes and is customizable through a CSS stylesheet
                 let ret = match pygmentize::highlight(&code, Some(&code_lang), &HtmlFormatter::new()) {
                     Ok(html) => Some(Event::Html(html.into())),
-                    Err(_) => {
-                        report_warning(&format!("Unable to create syntax highlighting for “{code_lang}” code block"));
+                    Err(e) => {
+                        report_warning(&format!("Unable to create syntax highlighting for “{code_lang}” code block, pygmentize error: {e}"));
                         Some(Event::Code(code.clone().into()))
                     },
                 };
@@ -178,7 +178,7 @@ pub fn process_markdown(
     Page {
         content: html_output,
         title,
-        path: PathBuf::new()
+        path: PathBuf::new(),
     }
 }
 
