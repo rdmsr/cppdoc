@@ -20,8 +20,6 @@ const ALIAS_TEMPLATE: &str = include_str!("templates/alias.html");
 fn cleanup_type(type_: &str) -> String {
     // Lmao
 
-    println!("Cleaning up type: {}", type_);
-
     let ret = type_
         .replace(" &", "</span>&")
         .replace(" *", "</span>*")
@@ -37,8 +35,6 @@ fn cleanup_type(type_: &str) -> String {
             "const ",
             "</span><span class=\"k\">const </span><span class=\"kt\">",
         );
-
-    println!("Cleaned up type: {}", ret);
 
     return ret;
 }
