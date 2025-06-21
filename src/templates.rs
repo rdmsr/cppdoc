@@ -282,7 +282,10 @@ fn get_link_for_type(
     config: &Config,
     index: &HashMap<String, String>,
 ) -> Option<String> {
-    let cleaned_name = name.trim_start_matches("const ");
+    let cleaned_name = name
+        .trim_start_matches("const ")
+        .trim_start_matches("struct ")
+        .trim_start_matches("enum ");
     let name_without_suffix = name.trim_matches(|c| c == '&' || c == ' ' || c == '*');
     let suffix = name.trim_start_matches(name_without_suffix).trim();
     let cleaned_name = cleaned_name.trim_matches(|c| c == '&' || c == ' ' || c == '*');
