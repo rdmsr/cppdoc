@@ -61,7 +61,9 @@ pub fn process_markdown(
 
     let parser = pulldown_cmark::Parser::new_ext(
         input,
-        pulldown_cmark::Options::ENABLE_YAML_STYLE_METADATA_BLOCKS,
+        pulldown_cmark::Options::ENABLE_YAML_STYLE_METADATA_BLOCKS |
+         pulldown_cmark::Options::ENABLE_HEADING_ATTRIBUTES 
+         | pulldown_cmark::Options::ENABLE_FOOTNOTES,
     )
     .filter_map(|event| match event {
         // -- Add support for mermaid code blocks and syntax highlighting --

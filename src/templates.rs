@@ -20,7 +20,27 @@ const ALIAS_TEMPLATE: &str = include_str!("templates/alias.html");
 fn cleanup_type(type_: &str) -> String {
     // Lmao
 
-    type_.replace(" &", "</span>&").replace(" *", "</span>*")
+    println!("Cleaning up type: {}", type_);
+
+    let ret = type_
+        .replace(" &", "</span>&")
+        .replace(" *", "</span>*")
+        .replace(
+            "struct ",
+            "</span><span class=\"k\">struct </span><span class=\"kt\">",
+        )
+        .replace(
+            "enum ",
+            "</span><span class=\"k\">enum </span><span class=\"kt\">",
+        )
+        .replace(
+            "const ",
+            "</span><span class=\"k\">const </span><span class=\"kt\">",
+        );
+
+    println!("Cleaned up type: {}", ret);
+
+    return ret;
 }
 
 fn tera_output_template(index: HashMap<String, String>, config: Config) -> impl tera::Function {
@@ -365,6 +385,20 @@ fn get_link_for_type(
 
     // First try name in current namespace
     let ret = render::get_path_for_name(&format!("{}::{}", curr_namespace, cleaned_name), index);
+
+    let name_without_suffix = name_without_suffix
+        .replace(
+            "struct ",
+            "</span><span class=\"k\">struct </span><span class=\"kt\">",
+        )
+        .replace(
+            "enum ",
+            "</span><span class=\"k\">enum </span><span class=\"kt\">",
+        )
+        .replace(
+            "const ",
+            "</span><span class=\"k\">const </span><span class=\"kt\">",
+        );
 
     if let Some(ret) = ret {
         return Some(format!(
