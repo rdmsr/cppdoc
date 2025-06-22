@@ -240,8 +240,11 @@ fn main() {
             let bar = ProgressBar::new_spinner();
             bar.enable_steady_tick(Duration::from_millis(100));
             bar.set_message("Rendering root namespace");
-            templates::output_namespace(root_namespace, &pages, &config, &output.index, &tera)
-                .unwrap();
+            
+            if let Err(e) = templates::output_namespace(root_namespace, &pages, &config, &output.index, &tera) {
+                report_error(&format!("Could not render root namespace: {}", e));
+            }
+
             bar.finish_and_clear();
 
             // Copy everything in the static directory to the output directory

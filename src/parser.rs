@@ -309,8 +309,8 @@ impl<'a> Parser<'a> {
                 | clang::EntityKind::ClassTemplate => {
                     let mut record = self.parse_record(*c)?;
 
-                    if !record.name.starts_with("(anonymous")
-                        && !record.name.starts_with("(unnamed")
+                    if !record.name.contains("(anonymous")
+                        && !record.name.contains("(unnamed")
                     {
                         record.namespace = Some(ret.name.clone());
 
@@ -325,7 +325,7 @@ impl<'a> Parser<'a> {
                 clang::EntityKind::EnumDecl => {
                     let mut enum_ = self.parse_enum(*c)?;
 
-                    if !enum_.name.starts_with("(anonymous") && !enum_.name.starts_with("(unnamed")
+                    if !enum_.name.contains("(anonymous") && !enum_.name.contains("(unnamed")
                     {
                         enum_.namespace = Some(ret.name.clone());
 
@@ -353,6 +353,10 @@ impl<'a> Parser<'a> {
             namespace: None,
             values: Vec::new(),
         };
+
+        if ret.name.contains("(unnamed") {
+            return None;
+        }
 
         if let Some(c) = node.get_comment() {
             ret.comment = comment::parse_comment(c);
@@ -556,7 +560,7 @@ impl<'a> Parser<'a> {
                 }
             }
 
-            clang::EntityKind::TypeAliasDecl => {
+            clang::EntityKind::TypedefDecl | clang::EntityKind::TypeAliasDecl => {
                 let mut type_ = String::new();
                 let mut templated = false;
 
@@ -588,7 +592,7 @@ impl<'a> Parser<'a> {
                 }
 
                 if type_.is_empty() {
-                    type_ = "unknown".to_string();
+                    type_ = node.get_typedef_underlying_type().unwrap().get_display_name();
                 }
 
                 let comment = if let Some(comment) = node.get_comment() {

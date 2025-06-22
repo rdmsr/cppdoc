@@ -496,7 +496,7 @@ pub fn output_record(
 
     let mut prefix = String::new();
 
-    if record.name.starts_with("(unnamed struct") {
+    if record.name.starts_with("(unnamed struct") || record.name.starts_with("struct (unnamed") {
         return Ok(());
     }
 
@@ -637,7 +637,7 @@ pub fn output_record(
                 format!("/{}", render::get_namespace_path(ns))
             }
         }
-        None => "".to_string(),
+        _ => "".to_string(),
     };
 
     context.insert("record", record);
@@ -715,7 +715,7 @@ fn output_enum(
     config: &Config,
     tera: &Tera,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if enum_.name.starts_with("(unnamed enum") {
+    if enum_.name.starts_with("(unnamed enum") || enum_.name.starts_with("enum (unnamed") {
         return Ok(());
     }
 
@@ -766,6 +766,7 @@ fn output_enum(
 
     let output = tera.render("enum", &context)?;
 
+    
     let path = format!("{}/{}/enum.{}.html", config.output.path, path, enum_.name);
     std::fs::write(&path, output)?;
 
@@ -789,7 +790,7 @@ pub fn output_namespace(
                 format!("/{}", render::get_namespace_path(ns))
             }
         }
-        None => "".to_string(),
+        _ => "".to_string(),
     };
 
     context.insert("namespace", namespace);
@@ -831,9 +832,13 @@ pub fn output_namespace(
         output_function(function, pages, config, tera)?;
     }
 
+   
+
     for enm in &namespace.enums {
         output_enum(enm, pages, config, tera)?;
     }
+
+
 
     for alias in &namespace.aliases {
         output_alias(alias, pages, config, index, tera)?;
