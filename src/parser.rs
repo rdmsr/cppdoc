@@ -231,6 +231,10 @@ impl<'a> Parser<'a> {
             ret.template = Some(self.parse_template(node));
         }
 
+        if node.get_children().len() == 0 {
+            return None;
+        }
+
         for c in node.get_children().iter() {
             match c.get_kind() {
                 clang::EntityKind::FieldDecl => if let Some(clang::Accessibility::Public) = c.get_accessibility() {
