@@ -23,7 +23,13 @@ pub fn parse_comment(string: String) -> Option<Comment> {
     let mut brief = String::new();
     while let Some(line) = lines.next() {
         let trimmed = line.trim();
-        if trimmed.is_empty() {
+        let cleaned = if trimmed.starts_with("//<") {
+            remove_prefix_and_clean(trimmed, "//<")
+        } else {
+            remove_prefix_and_clean(trimmed, "///")
+        };
+
+        if cleaned.is_empty() {
             break;
         }
 
@@ -31,11 +37,7 @@ pub fn parse_comment(string: String) -> Option<Comment> {
             brief.push(' ');
         }
 
-        if trimmed.starts_with("///<") {
-            brief.push_str(&remove_prefix_and_clean(trimmed, "///<"));
-        } else {
-            brief.push_str(&remove_prefix_and_clean(trimmed, "///"));
-        }
+        brief.push_str(&cleaned);
     }
 
     ret.brief = brief;
