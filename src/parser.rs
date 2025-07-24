@@ -238,7 +238,7 @@ impl<'a> Parser<'a> {
         for c in node.get_children().iter() {
             match c.get_kind() {
                 clang::EntityKind::FieldDecl => if let Some(clang::Accessibility::Public) = c.get_accessibility() {
-                    let comment = if let Some(comment) = node.get_comment() {
+                    let comment = if let Some(comment) = c.get_comment() {
                         comment::parse_comment(comment)
                     } else {
                         None
@@ -371,7 +371,7 @@ impl<'a> Parser<'a> {
 
         for c in node.get_children().iter() {
             if c.get_kind() == clang::EntityKind::EnumConstantDecl {
-                let comment = if let Some(comment) = node.get_comment() {
+                let comment = if let Some(comment) = c.get_comment() {
                     comment::parse_comment(comment)
                 } else {
                     None
