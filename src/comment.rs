@@ -23,8 +23,8 @@ pub fn parse_comment(string: String) -> Option<Comment> {
     let mut brief = String::new();
     while let Some(line) = lines.next() {
         let trimmed = line.trim();
-        let cleaned = if trimmed.starts_with("//<") {
-            remove_prefix_and_clean(trimmed, "//<")
+        let cleaned = if trimmed.starts_with("///<") {
+            remove_prefix_and_clean(trimmed, "///<")
         } else {
             remove_prefix_and_clean(trimmed, "///")
         };
