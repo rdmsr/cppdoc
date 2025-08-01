@@ -18,12 +18,12 @@ More command-line options can be displayed using `-h` or `--help`.
 
 
 ## Comments
-Comments are written using `///` or `//<`, the latter being used for inline documentation, as such:
+Comments are written using `///` or `///<`, the latter being used for inline documentation, as such:
 
 ```cpp
 /// Documentation for 'MyEnum'
 enum MyEnum {
-	A //< Documentation for 'A' 
+	A ///< Documentation for 'A' 
 }
 ```
 
