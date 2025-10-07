@@ -20,7 +20,7 @@ The configuration file is a TOML file named `cppdoc.toml` with the following sec
 
 ## `pages`
 - `index` (optional): Markdown file to use as the index file, if an index page is not specified, the root namespace's comment will be used instead.
-- `book`: Path to directory containing an `mdbook`-type `SUMMARY.md` file, listing all pages
+- `book` (optional): Path to directory containing an `mdbook`-type `SUMMARY.md` file, listing all pages
 
 ## `doctests` (optional)
 - `enable`: Whether to enable documentation tests or not.
