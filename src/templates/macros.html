@@ -5,7 +5,7 @@
 {% endmacro -%}
 
 
-{% macro output_page(page, curpage, indent_level=0) -%}
+{% macro output_page(page, curpage, indent_level=1) -%}
   <li>
     {% if page['numbered'] %}{{ page['number'] }}.{% endif %} {% if curpage['path'] == page['path'] %}<a class="active" href="{{ config.output.base_url }}/{{ page['path'] }}.html">{{ page['name'] }}</a>{% else %}<a href="{{ config.output.base_url }}/{{ page['path'] }}.html">{{ page['name'] }}</a> {% endif %}
   </li>
