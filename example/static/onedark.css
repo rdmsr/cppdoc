@@ -13,6 +13,11 @@
     --code-color: #ABB2BF;
     --code-bg-color: #1f2329;
     --highlight-color: #E6B67330;
+    --sidebar-bg: #1f2329;
+}
+
+a:hover, .active {
+    color: #E5C07B !important;
 }
 
 .highlight .hll { background-color: #ffffcc }
