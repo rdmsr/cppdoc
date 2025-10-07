@@ -174,7 +174,7 @@ impl<'a> Parser<'a> {
             ret.comment = comment::parse_comment(c);
             if ret.comment.is_none() {
                 return None;
-            }   
+            }
         }
 
         for c in node
@@ -224,7 +224,7 @@ impl<'a> Parser<'a> {
             ret.comment = comment::parse_comment(c);
             if ret.comment.is_none() {
                 return None;
-            }   
+            }
         }
 
         if node.get_kind() == clang::EntityKind::ClassTemplate {
@@ -237,59 +237,61 @@ impl<'a> Parser<'a> {
 
         for c in node.get_children().iter() {
             match c.get_kind() {
-                clang::EntityKind::FieldDecl => if let Some(clang::Accessibility::Public) = c.get_accessibility() {
-                    let comment = if let Some(comment) = c.get_comment() {
-                        comment::parse_comment(comment)
-                    } else {
-                        None
-                    };
+                clang::EntityKind::FieldDecl => {
+                    if let Some(clang::Accessibility::Public) = c.get_accessibility() {
+                        let comment = if let Some(comment) = c.get_comment() {
+                            comment::parse_comment(comment)
+                        } else {
+                            None
+                        };
 
-                    let mut field = Field {
-                        name: c.get_name().unwrap_or_default(),
-                        type_: c.get_type().unwrap().get_display_name(),
-                        comment,
-                        struct_: None,
-                    };
+                        let mut field = Field {
+                            name: c.get_name().unwrap_or_default(),
+                            type_: c.get_type().unwrap().get_display_name(),
+                            comment,
+                            struct_: None,
+                        };
 
-                    // NOTE: We assume that unnamed struct types always have "(unnamed struct" in their
-                    if field.type_.contains("(unnamed struct") {
-                        let ret_struct = self.parse_record(
-                            *c.get_children()
-                                .iter()
-                                .find(|c| c.get_kind() == clang::EntityKind::StructDecl)
-                                .unwrap(),
-                        )?;
+                        // NOTE: We assume that unnamed struct types always have "(unnamed struct" in their
+                        if field.type_.contains("(unnamed struct") {
+                            let ret_struct = self.parse_record(
+                                *c.get_children()
+                                    .iter()
+                                    .find(|c| c.get_kind() == clang::EntityKind::StructDecl)
+                                    .unwrap(),
+                            )?;
 
-                        field.type_ = "struct".to_string();
-                        field.struct_ = Some(NestedField::Record(ret_struct));
+                            field.type_ = "struct".to_string();
+                            field.struct_ = Some(NestedField::Record(ret_struct));
+                        }
+
+                        if field.type_.contains("(unnamed union") {
+                            let ret_struct = self.parse_record(
+                                *c.get_children()
+                                    .iter()
+                                    .find(|c| c.get_kind() == clang::EntityKind::UnionDecl)
+                                    .unwrap(),
+                            )?;
+
+                            field.type_ = "union".to_string();
+                            field.struct_ = Some(NestedField::Record(ret_struct));
+                        }
+
+                        if field.type_.contains("(unnamed enum") {
+                            let ret_enum = self.parse_enum(
+                                *c.get_children()
+                                    .iter()
+                                    .find(|c| c.get_kind() == clang::EntityKind::EnumDecl)
+                                    .unwrap(),
+                            )?;
+
+                            field.type_ = "enum".to_string();
+                            field.struct_ = Some(NestedField::Enum(ret_enum));
+                        }
+
+                        ret.fields.push(field);
                     }
-
-                    if field.type_.contains("(unnamed union") {
-                        let ret_struct = self.parse_record(
-                            *c.get_children()
-                                .iter()
-                                .find(|c| c.get_kind() == clang::EntityKind::UnionDecl)
-                                .unwrap(),
-                        )?;
-
-                        field.type_ = "union".to_string();
-                        field.struct_ = Some(NestedField::Record(ret_struct));
-                    }
-
-                    if field.type_.contains("(unnamed enum") {
-                        let ret_enum = self.parse_enum(
-                            *c.get_children()
-                                .iter()
-                                .find(|c| c.get_kind() == clang::EntityKind::EnumDecl)
-                                .unwrap(),
-                        )?;
-
-                        field.type_ = "enum".to_string();
-                        field.struct_ = Some(NestedField::Enum(ret_enum));
-                    }
-
-                    ret.fields.push(field);
-                },
+                }
 
                 clang::EntityKind::Constructor => {
                     let mut function = self.parse_function(*c)?;
@@ -313,9 +315,7 @@ impl<'a> Parser<'a> {
                 | clang::EntityKind::ClassTemplate => {
                     let mut record = self.parse_record(*c)?;
 
-                    if !record.name.contains("(anonymous")
-                        && !record.name.contains("(unnamed")
-                    {
+                    if !record.name.contains("(anonymous") && !record.name.contains("(unnamed") {
                         record.namespace = Some(ret.name.clone());
 
                         if ret.nested.is_none() {
@@ -329,8 +329,7 @@ impl<'a> Parser<'a> {
                 clang::EntityKind::EnumDecl => {
                     let mut enum_ = self.parse_enum(*c)?;
 
-                    if !enum_.name.contains("(anonymous") && !enum_.name.contains("(unnamed")
-                    {
+                    if !enum_.name.contains("(anonymous") && !enum_.name.contains("(unnamed") {
                         enum_.namespace = Some(ret.name.clone());
 
                         if ret.nested.is_none() {
@@ -366,7 +365,7 @@ impl<'a> Parser<'a> {
             ret.comment = comment::parse_comment(c);
             if ret.comment.is_none() {
                 return None;
-            }   
+            }
         }
 
         for c in node.get_children().iter() {
@@ -516,51 +515,53 @@ impl<'a> Parser<'a> {
             }
 
             clang::EntityKind::Namespace => {
-                let name = node.get_name().unwrap();
-                let comment = if let Some(comment) = node.get_comment() {
-                    comment::parse_comment(comment)
-                } else {
-                    None
-                };
+                if let Some(name) = node.get_name() {
+                    let comment = if let Some(comment) = node.get_comment() {
+                        comment::parse_comment(comment)
+                    } else {
+                        None
+                    };
 
-                let mut real_ns = Namespace {
-                    name: node.get_name().unwrap(),
-                    comment,
-                    records: Vec::new(),
-                    functions: Vec::new(),
-                    namespaces: Vec::new(),
-                    enums: Vec::new(),
-                    aliases: Vec::new(),
-                    namespace: Some(current_namespace_name.to_string()),
-                };
+                    let mut real_ns = Namespace {
+                        name: node.get_name().unwrap(),
+                        comment,
+                        records: Vec::new(),
+                        functions: Vec::new(),
+                        namespaces: Vec::new(),
+                        enums: Vec::new(),
+                        aliases: Vec::new(),
+                        namespace: Some(current_namespace_name.to_string()),
+                    };
 
-                let mut already_exists = false;
+                    let mut already_exists = false;
 
-                let new_ns =
-                    if let Some(existing_ns) = ns.namespaces.iter_mut().find(|n| n.name == name) {
+                    let new_ns = if let Some(existing_ns) =
+                        ns.namespaces.iter_mut().find(|n| n.name == name)
+                    {
                         already_exists = true;
                         existing_ns
                     } else {
                         &mut real_ns
                     };
 
-                index.insert(absolute_name, "namespace".to_string());
+                    index.insert(absolute_name, "namespace".to_string());
 
-                for cursor in node.get_children() {
-                    if !current_namespace_name.is_empty() {
-                        self.parse_node(
-                            cursor,
-                            new_ns,
-                            index,
-                            format!("{}::{}", current_namespace_name, name.as_str()).as_str(),
-                        );
-                    } else {
-                        self.parse_node(cursor, new_ns, index, name.as_str());
+                    for cursor in node.get_children() {
+                        if !current_namespace_name.is_empty() {
+                            self.parse_node(
+                                cursor,
+                                new_ns,
+                                index,
+                                format!("{}::{}", current_namespace_name, name.as_str()).as_str(),
+                            );
+                        } else {
+                            self.parse_node(cursor, new_ns, index, name.as_str());
+                        }
                     }
-                }
 
-                if !already_exists {
-                    ns.namespaces.push(real_ns);
+                    if !already_exists {
+                        ns.namespaces.push(real_ns);
+                    }
                 }
             }
 
@@ -596,7 +597,10 @@ impl<'a> Parser<'a> {
                 }
 
                 if type_.is_empty() {
-                    type_ = node.get_typedef_underlying_type().unwrap().get_display_name();
+                    type_ = node
+                        .get_typedef_underlying_type()
+                        .unwrap()
+                        .get_display_name();
                 }
 
                 let comment = if let Some(comment) = node.get_comment() {
