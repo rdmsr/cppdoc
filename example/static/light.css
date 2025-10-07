@@ -11,6 +11,11 @@
     --heading-color: #3E4349;
     --link-color: #004B6B;
     --highlight-color: #E6B67330;
+    --sidebar-bg: #f8f8f8;
+}
+
+a:hover, .active {
+    color: #6D4100 !important;
 }
 
 .highlight .hll { background-color: #ffffcc }

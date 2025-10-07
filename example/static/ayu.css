@@ -9,10 +9,16 @@
     --bg-color: #0F1419;
     --text-color: #E6E1CF;
     --heading-color: #E6E1CF;
-    --link-color: #FF7733;
+    --link-color: #0096cf;
     --code-color: #E6E1CF;
     --code-bg-color: #191f26;
     --highlight-color: #E6B67330;
+    --sidebar-bg: rgb(20 25 31);
+    --scrollbar-color: var(--text-color);
+}
+
+a:hover, .active {
+    color: #FF7733 !important;
 }
 
 

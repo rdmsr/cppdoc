@@ -3,8 +3,10 @@ use glob::glob;
 use indicatif::{ProgressBar, ProgressStyle};
 use render::get_path_for_name;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::{path::Path, time::Duration};
 
+mod book;
 mod comment;
 mod config;
 mod doctest;
@@ -49,6 +51,36 @@ enum Commands {
     },
 }
 
+fn render_page(
+    page: &book::Page,
+    index: &HashMap<String, String>,
+    doctests: &mut Vec<doctest::Doctest>,
+    config: &config::Config,
+) -> Vec<render::Page> {
+    let mut ret = vec![];
+
+    match std::fs::read_to_string(&page.path) {
+        Ok(source) => {
+            let mut page_ret = render::process_markdown(&source, &index, doctests, &config);
+
+            page_ret.title = page.name.clone();
+            page_ret.path = Path::new(&page.path).to_path_buf();
+
+            for sub_page in &page.sub_pages {
+                ret.extend(render_page(&sub_page, &index, doctests, &config));
+            }
+
+            ret.push(page_ret);
+
+            ret
+        }
+        Err(e) => {
+            report_warning(&format!("Error reading page \"{0}\": {e}", page.path));
+            vec![]
+        }
+    }
+}
+
 fn main() {
     let args = Cli::parse();
 
@@ -80,12 +112,11 @@ fn main() {
                         bar.set_message(format!("Parsing {}", file.to_str().unwrap()));
                         parser.parse(&config, file.to_str().unwrap(), &mut output);
                         bar.tick();
-                    },
+                    }
                     Err(e) => {
                         report_warning(&format!("Error reading input file: {e:}"));
                     }
                 };
-
             }
 
             bar.finish_and_clear();
@@ -120,34 +151,30 @@ fn main() {
                 },
             };
 
-            let index_html =
+            let mut index_html =
                 render::process_markdown(&index, &output.index, &mut doctests, &config);
+
+            index_html.path = "index.html".into();
 
             let mut extra_pages = Vec::new();
 
-            for g in &config.pages.extra.clone().unwrap_or_default() {
-                for file in glob(g).expect("Failed to read glob pattern") {
-                    match file {
-                        Ok(page_path) => {
-                            match std::fs::read_to_string(&page_path) {
-                                Ok(source) => {
-                                    let mut page =
-                                        render::process_markdown(&source, &output.index, &mut doctests, &config);
-                                    if page.title.is_empty() {
-                                        page.title = page_path.file_name().unwrap().to_string_lossy().into_owned();
-                                    }
-                                    page.path = page_path;
-                                    extra_pages.push(page);
-                                },
-                                Err(e) => {
-                                    report_warning(&format!("Error reading extra file “{page_path:?}”: {e}"));
-                                }
-                            };
-                        },
-                        Err(e) => {
-                            report_warning(&format!("Error reading extra file “{g}”: {e}"));
-                        }
-                    };
+            if let Some(_) = config.pages.extra {
+                report_warning("The `extra` option is deprecated, please use `book` instead");
+            }
+
+            let mut summary: book::Summary = Default::default();
+
+            if let Some(ref book_dir) = config.pages.book {
+                let path = std::path::Path::new(&book_dir).join("SUMMARY.md");
+
+                let contents = std::fs::read_to_string(path).unwrap();
+
+                summary = book::parse_summary(&contents, book_dir);
+            }
+
+            for segment in &summary.segments {
+                if let book::Segment::Page(p) = segment {
+                    extra_pages.extend(render_page(&p, &output.index, &mut doctests, &config));
                 }
             }
 
@@ -197,12 +224,14 @@ fn main() {
                 .unwrap();
 
             for page in &pages.extra {
-                let path = Path::new(&config.output.path).join(page.path.parent().unwrap_or_else(|| &Path::new("")));
-                std::fs::create_dir_all(path).map_err(|e| {
-                    report_error(&format!("Error creating output directory: {}", e));
-                    std::process::exit(1);
-                })
-                .unwrap();
+                let path = Path::new(&config.output.path)
+                    .join(page.path.parent().unwrap_or_else(|| &Path::new("")));
+                std::fs::create_dir_all(path)
+                    .map_err(|e| {
+                        report_error(&format!("Error creating output directory: {}", e));
+                        std::process::exit(1);
+                    })
+                    .unwrap();
             }
 
             let tera = templates::init(&output.index, &config);
@@ -211,20 +240,27 @@ fn main() {
             context.insert("config", &config);
             context.insert("project", &config.project);
             context.insert("pages", &pages);
+            context.insert("summary", &summary);
 
             for page in &pages.extra {
                 context.insert("content", &page.content);
                 context.insert("title", &page.title);
+                context.insert("page", &page);
 
-                std::fs::write(
-                    format!("{}/{}.html", config.output.path, page.path.display()),
-                    tera.render("docpage", &context).unwrap(),
-                )
-                .map_err(|e| {
-                    report_error(&format!("Error writing extra page file: {}", e));
-                    std::process::exit(1);
-                })
-                .unwrap();
+                let mut out_path = Path::new(&config.output.path).join(&page.path);
+
+                out_path.set_extension("md.html");
+
+                std::fs::write(&out_path, tera.render("docpage", &context).unwrap())
+                    .map_err(|e| {
+                        report_error(&format!(
+                            "Error writing extra page file {}: {}",
+                            out_path.display(),
+                            e
+                        ));
+                        std::process::exit(1);
+                    })
+                    .unwrap();
             }
 
             std::fs::write(
@@ -240,8 +276,15 @@ fn main() {
             let bar = ProgressBar::new_spinner();
             bar.enable_steady_tick(Duration::from_millis(100));
             bar.set_message("Rendering root namespace");
-            
-            if let Err(e) = templates::output_namespace(root_namespace, &pages, &config, &output.index, &tera) {
+
+            if let Err(e) = templates::output_namespace(
+                root_namespace,
+                &pages,
+                &config,
+                &output.index,
+                &summary,
+                &tera,
+            ) {
                 report_error(&format!("Could not render root namespace: {}", e));
             }
 

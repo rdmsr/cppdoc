@@ -22,7 +22,7 @@
 </head>
 
 <body>
-	{{ macros::sidebar(pages=pages, project=project) }}
+	{{ macros::sidebar(pages=pages, project=project, summary=summary, page=page) }}
 
 	<div id="content">{% block content %}{% endblock content %}</div>
 </body>

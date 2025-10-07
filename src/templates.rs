@@ -1,3 +1,4 @@
+use crate::book;
 use crate::config::Config;
 use crate::parser;
 use crate::render;
@@ -258,6 +259,7 @@ pub fn output_function(
     function: &parser::Function,
     pages: &crate::Pages,
     config: &Config,
+    summary: &book::Summary,
     tera: &Tera,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let path = match function.namespace {
@@ -277,6 +279,8 @@ pub fn output_function(
     context.insert("pages", &pages);
     context.insert("project", &config.project);
     context.insert("config", &config);
+    context.insert("summary", &summary);
+    context.insert("page", &pages.index);
 
     let path = format!(
         "{}/{}/function.{}.html",
@@ -490,6 +494,7 @@ pub fn output_record(
     pages: &crate::Pages,
     config: &Config,
     index: &HashMap<String, String>,
+    summary: &book::Summary,
     tera: &Tera,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut context = tera::Context::new();
@@ -604,7 +609,7 @@ pub fn output_record(
                     Some(format!("{}::{}", ns_name, record.name))
                 };
 
-                output_record(&rec, pages, config, index, tera)?;
+                output_record(&rec, pages, config, index, summary, tera)?;
             } else if let parser::NestedField::Enum(enm) = nested_field {
                 let mut enm = enm.clone();
                 enm.namespace = if ns_name.is_empty() {
@@ -613,7 +618,7 @@ pub fn output_record(
                     Some(format!("{}::{}", ns_name, record.name))
                 };
 
-                output_enum(&enm, pages, config, tera)?;
+                output_enum(&enm, pages, config, summary, tera)?;
             }
         }
     }
@@ -645,6 +650,8 @@ pub fn output_record(
     context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("listing", &listing);
+    context.insert("summary", &summary);
+    context.insert("page", &pages.index);
 
     let output = tera.render("record", &context)?;
 
@@ -663,6 +670,7 @@ fn output_alias(
     pages: &crate::Pages,
     config: &Config,
     index: &HashMap<String, String>,
+    summary: &book::Summary,
     tera: &Tera,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut context = tera::Context::new();
@@ -699,6 +707,8 @@ fn output_alias(
     context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("listing", &listing);
+    context.insert("summary", &summary);
+    context.insert("page", &pages.index);
 
     let output = tera.render("alias", &context)?;
 
@@ -713,6 +723,7 @@ fn output_enum(
     enum_: &parser::Enum,
     pages: &crate::Pages,
     config: &Config,
+    summary: &book::Summary,
     tera: &Tera,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if enum_.name.starts_with("(unnamed enum") || enum_.name.starts_with("enum (unnamed") {
@@ -763,10 +774,11 @@ fn output_enum(
     context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("listing", &listing);
+    context.insert("summary", &summary);
+    context.insert("page", &pages.index);
 
     let output = tera.render("enum", &context)?;
 
-    
     let path = format!("{}/{}/enum.{}.html", config.output.path, path, enum_.name);
     std::fs::write(&path, output)?;
 
@@ -778,6 +790,7 @@ pub fn output_namespace(
     pages: &crate::Pages,
     config: &Config,
     index: &HashMap<String, String>,
+    summary: &book::Summary,
     tera: &Tera,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut context = tera::Context::new();
@@ -797,6 +810,8 @@ pub fn output_namespace(
     context.insert("config", &config);
     context.insert("project", &config.project);
     context.insert("pages", &pages);
+    context.insert("summary", &summary);
+    context.insert("page", &pages.index);
 
     let index_ns_name = config.output.root_namespace.as_deref().unwrap_or_default();
     let is_root = namespace.name.is_empty() || namespace.name == index_ns_name;
@@ -825,27 +840,23 @@ pub fn output_namespace(
     std::fs::write(&path, output)?;
 
     for record in &namespace.records {
-        output_record(record, pages, config, index, tera)?;
+        output_record(record, pages, config, index, summary, tera)?;
     }
 
     for function in &namespace.functions {
-        output_function(function, pages, config, tera)?;
+        output_function(function, pages, config, summary, tera)?;
     }
-
-   
 
     for enm in &namespace.enums {
-        output_enum(enm, pages, config, tera)?;
+        output_enum(enm, pages, config, summary, tera)?;
     }
 
-
-
     for alias in &namespace.aliases {
-        output_alias(alias, pages, config, index, tera)?;
+        output_alias(alias, pages, config, index, summary, tera)?;
     }
 
     for ns in &namespace.namespaces {
-        output_namespace(ns, pages, config, index, tera)?;
+        output_namespace(ns, pages, config, index, summary, tera)?;
     }
 
     Ok(())

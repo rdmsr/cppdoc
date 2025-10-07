@@ -142,24 +142,54 @@ a code {
     overflow-x: auto;
 }
 
-div.sidebarwrapper {
-    padding: 10px 5px 0 10px;
+div.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 300px;
+  padding: 0;
+  background-color: var(--sidebar-bg);
+  word-wrap: break-word;
+  overflow: hidden;
+  z-index: 1000;
 }
 
-div.sidebar {
-    float: left;
-    width: 230px;
-    margin-left: -30%;
-    font-size: 90%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    max-height: 100%;
-    overflow-y: auto;
+div.sidebarwrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px 5px 0 10px;
+}
+
+div.sidebar-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 5px;
 }
 
 div.sidebar ul {
     list-style-type: none;
     padding: 0;
+}
+
+.sidebar-scroll {
+  scrollbar-color: var(--scrollbar-color) var(--bg-color);
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--text-color);
+  border-radius: 4px;
+  border: 2px solid var(--bg-color); 
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--heading-color);
 }
 
 div.sidebar h1,
@@ -178,9 +208,15 @@ div.sidebar a {
     background-color: var(--bg-color);
     color: var(--text-color);
     border-width: 0.5px;
+    padding: 5px;
     border-color: var(--text-color);
     border-radius: 2px;
 }
+
+.mobile-nav {
+  display: none;
+}
+
 
 @media (max-width: 1024px) {
     div.sidebar {
@@ -224,4 +260,50 @@ div.sidebar a {
     .item-table .item-desc * {
         margin-left: 20px;
     }
+
+  /* Hide the fixed sidebar */
+  div.sidebar {
+    display: none;
+  }
+
+  /* Show mobile nav */
+  .mobile-nav {
+    display: block;
+    padding: 15px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--text-color);
+  }
+
+  .mobile-nav h1 {
+    font-family: var(--font-main);
+    color: var(--heading-color);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    border-bottom: 0px;
+  }
+
+  .mobile-nav h2 {
+    margin-top: 1em;
+    font-size: 1.2rem;
+    color: var(--heading-color);
+    border-bottom: 0px;
+  }
+
+  .mobile-nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .mobile-nav li {
+    margin: 4px 0;
+  }
+
+  .mobile-nav a {
+    display: block;
+    color: var(--link-color);
+    font-size: 1rem;
+    text-decoration: none;
+  }
+
 }

@@ -8,12 +8,12 @@ compiler_arguments = ["-Iinclude", "-std=gnu++20", "-xc++"]
 
 [pages]
 index = "README.md"
-extra = ["extra-pages/extra-page.md"]
+book = "extra-pages"
 
 [output]
 static_dir = "static"
 path = "docs"
-base_url = "/cppdoc"
+base_url = ""
 
 [doctests]
 enable = false 

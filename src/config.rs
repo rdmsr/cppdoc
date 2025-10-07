@@ -26,6 +26,7 @@ pub struct Input {
 pub struct Pages {
     pub index: Option<String>,
     pub extra: Option<Vec<String>>,
+    pub book: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
