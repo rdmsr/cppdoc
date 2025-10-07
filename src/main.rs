@@ -144,7 +144,13 @@ fn main() {
             render::process_namespace(root_namespace, &output.index, &mut doctests, &config);
 
             let index = match config.pages.index {
-                Some(ref x) => std::fs::read_to_string(x).unwrap(),
+                Some(ref x) => match std::fs::read_to_string(x) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        report_error(&format!("Could not read index file: {}", e));
+                        "".into()
+                    }
+                },
                 None => match root_namespace.comment {
                     Some(ref comment) => comment.description.clone(),
                     None => String::new(),
@@ -263,6 +269,8 @@ fn main() {
                     .unwrap();
             }
 
+            context.insert("page", &pages.index);
+
             std::fs::write(
                 format!("{}/search.html", config.output.path),
                 tera.render("search", &context).unwrap(),
@@ -290,13 +298,21 @@ fn main() {
 
             bar.finish_and_clear();
 
-            // Copy everything in the static directory to the output directory
-            for entry in std::fs::read_dir(&config.output.static_dir).unwrap() {
-                let entry = entry.unwrap();
-                let path = entry.path();
-                let filename = path.file_name().unwrap();
-                let dest = format!("{}/{}", config.output.path, filename.to_str().unwrap());
-                std::fs::copy(&path, &dest).unwrap();
+            match std::fs::read_dir(&config.output.static_dir) {
+                Ok(dir) => {
+                    // Copy everything in the static directory to the output directory
+                    for entry in dir {
+                        let entry = entry.unwrap();
+                        let path = entry.path();
+                        let filename = path.file_name().unwrap();
+                        let dest = format!("{}/{}", config.output.path, filename.to_str().unwrap());
+                        std::fs::copy(&path, &dest).unwrap();
+                    }
+                }
+
+                Err(e) => {
+                    report_error(&format!("Could not copy static directory: {}", e));
+                }
             }
 
             // Make a new, more searchable index
