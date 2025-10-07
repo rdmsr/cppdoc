@@ -40,10 +40,15 @@
     --bg-color: var(--bg_s);
     --text-color: var(--fg);
     --heading-color: var(--fg1);
-    --link-color: var(--orange);
+    --link-color: var(--blue);
     --code-color: var(--fg1);
     --code-bg-color: var(--bg);
     --highlight-color: var(--bg2);
+    --sidebar-bg: var(--bg);
+}
+
+a:hover, .active {
+    color: var(--orange) !important;
 }
 
 .highlight .hll { background-color: #ebdbb2 }
