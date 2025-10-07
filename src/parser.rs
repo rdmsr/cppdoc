@@ -252,7 +252,7 @@ impl<'a> Parser<'a> {
                             struct_: None,
                         };
 
-                        // NOTE: We assume that unnamed struct types always have "(unnamed struct" in their
+                        // NOTE: We assume that unnamed struct types always have "(unnamed struct" in their name
                         if field.type_.contains("(unnamed struct") {
                             let ret_struct = self.parse_record(
                                 *c.get_children()
@@ -313,15 +313,16 @@ impl<'a> Parser<'a> {
                 | clang::EntityKind::ClassDecl
                 | clang::EntityKind::UnionDecl
                 | clang::EntityKind::ClassTemplate => {
-                    let mut record = self.parse_record(*c)?;
+                    if let Some(mut record) = self.parse_record(*c) {
+                        if !record.name.contains("(anonymous") && !record.name.contains("(unnamed")
+                        {
+                            record.namespace = Some(ret.name.clone());
 
-                    if !record.name.contains("(anonymous") && !record.name.contains("(unnamed") {
-                        record.namespace = Some(ret.name.clone());
-
-                        if ret.nested.is_none() {
-                            ret.nested = Some(Vec::new());
-                        } else if let Some(nested) = ret.nested.as_mut() {
-                            nested.push(NestedField::Record(record));
+                            if ret.nested.is_none() {
+                                ret.nested = Some(Vec::new());
+                            } else if let Some(nested) = ret.nested.as_mut() {
+                                nested.push(NestedField::Record(record));
+                            }
                         }
                     }
                 }
