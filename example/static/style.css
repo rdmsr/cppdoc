@@ -25,6 +25,9 @@ h5,
 h6 {
     font-family: var(--font-main);
     color: var(--heading-color);
+}
+
+.section {
     border-bottom: 1px solid var(--text-color);
 }
 

@@ -6,7 +6,7 @@
 {{ content }}
 
 {% if namespace.namespaces %}
-  <h2 id="namespaces"> Namespaces </h2>
+  <h2 id="namespaces" class="section"> Namespaces </h2>
 <ul class="item-table">
     {%- for ns in namespace.namespaces %}
     <li>
@@ -21,7 +21,7 @@
 {% endif %}
 
   {% if namespace.records %}
-  <h2 id="records"> Records </h2>
+  <h2 id="records" class="section"> Records </h2>
   <ul class="item-table">
    {%- for record in namespace.records %}
     <li>
@@ -35,7 +35,7 @@
   {% endif %}
 
  {% if namespace.functions %}
-  <h2 id="functions"> Functions </h2>
+  <h2 id="functions" class="section"> Functions </h2>
   <ul class="item-table">
    {%- for func in namespace.functions %}
    <li>
@@ -54,7 +54,7 @@
 
 
  {% if namespace.enums %}
-  <h2 id="enums"> Enums </h2>
+  <h2 id="enums" class="section"> Enums </h2>
   <ul class="item-table">
    {%- for enum in namespace.enums %}
     <li>
@@ -68,7 +68,7 @@
   {% endif %}
 
  {% if namespace.aliases %}
-  <h2 id="aliases"> Aliases </h2>
+  <h2 id="aliases" class="section"> Aliases </h2>
   <ul class="item-table">
    {%- for alias in namespace.aliases %}
     <li>
