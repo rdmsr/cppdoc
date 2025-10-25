@@ -1,3 +1,4 @@
+@import "highlight.css";
 @import "ayu.css";
 
 body {
@@ -27,7 +28,7 @@ h6 {
     color: var(--heading-color);
 }
 
-.section {
+h1.section, h2.section, h3.section, h4.section, h5.section, h6.section {
     border-bottom: 1px solid var(--text-color);
 }
 

@@ -1,8 +1,8 @@
 [
   {
     "id": 0,
-    "name": "OtherStruct",
-    "link": "record.OtherStruct",
+    "name": "MyStruct",
+    "link": "record.MyStruct",
     "kind": "record"
   },
   {
@@ -13,8 +13,8 @@
   },
   {
     "id": 2,
-    "name": "MyStruct",
-    "link": "record.MyStruct",
+    "name": "OtherStruct",
+    "link": "record.OtherStruct",
     "kind": "record"
   },
   {
