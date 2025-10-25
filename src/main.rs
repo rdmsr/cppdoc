@@ -153,7 +153,7 @@ fn main() {
             }
 
             if dump_json {
-                let json = serde_json::to_string_pretty(&output).unwrap();
+                let json = serde_json::to_string(&output).unwrap();
                 println!("{}", json);
                 return;
             }
@@ -447,7 +447,7 @@ fn main() {
                 id += 1;
             }
 
-            let index_json = serde_json::to_string_pretty(&index).unwrap();
+            let index_json = serde_json::to_string(&index).unwrap();
 
             std::fs::write(
                 format!("{}/search_index.json", config.output.path),
