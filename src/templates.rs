@@ -628,7 +628,7 @@ pub fn output_record(
         }
     }
 
-    listing.push_str("<span class=\"c\">  /* Full declaration omitted */ </span>");
+    listing.push_str("<span class=\"comment\">  /* Full declaration omitted */ </span>");
     if !record.fields.is_empty() {
         listing.push('\n');
     }
