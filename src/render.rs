@@ -1,20 +1,27 @@
 use crate::config::Config;
 use crate::doctest;
 use crate::parser;
-use crate::report::report_warning;
 
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
 use pulldown_cmark::{CodeBlockKind, Event, Tag, TagEnd};
-use pygmentize::HtmlFormatter;
+use syntect::highlighting::ThemeSet;
+use syntect::html::{ClassStyle, ClassedHTMLGenerator};
+use syntect::parsing::SyntaxSet;
+use syntect::util::LinesWithEndings;
 
 #[derive(Debug, Serialize)]
 pub struct Page {
     pub title: String,
     pub content: String,
     pub path: PathBuf,
+}
+
+pub struct HighlightState {
+    pub syntax_set: SyntaxSet,
+    pub theme_set: ThemeSet,
 }
 
 pub fn get_path_for_name(name: &str, index: &HashMap<String, String>) -> Option<String> {
@@ -51,6 +58,7 @@ pub fn process_markdown(
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
     config: &Config,
+    highlight_state: &HighlightState,
 ) -> Page {
     let mut code = String::new();
     let mut in_code_block = false;
@@ -61,9 +69,9 @@ pub fn process_markdown(
 
     let parser = pulldown_cmark::Parser::new_ext(
         input,
-        pulldown_cmark::Options::ENABLE_YAML_STYLE_METADATA_BLOCKS |
-         pulldown_cmark::Options::ENABLE_HEADING_ATTRIBUTES 
-         | pulldown_cmark::Options::ENABLE_FOOTNOTES,
+        pulldown_cmark::Options::ENABLE_YAML_STYLE_METADATA_BLOCKS
+            | pulldown_cmark::Options::ENABLE_HEADING_ATTRIBUTES
+            | pulldown_cmark::Options::ENABLE_FOOTNOTES,
     )
     .filter_map(|event| match event {
         // -- Add support for mermaid code blocks and syntax highlighting --
@@ -98,18 +106,33 @@ pub fn process_markdown(
                     code_lang = "cpp".to_string();
                 }
 
-                // Pygmentize was chosen over syntect because it has way more themes and is customizable through a CSS stylesheet
-                let ret = match pygmentize::highlight(&code, Some(&code_lang), &HtmlFormatter::new()) {
-                    Ok(html) => Some(Event::Html(html.into())),
-                    Err(e) => {
-                        report_warning(&format!("Unable to create syntax highlighting for “{code_lang}” code block, pygmentize error: {e}"));
-                        Some(Event::Code(code.clone().into()))
-                    },
-                };
+                let syntax = highlight_state
+                    .syntax_set
+                    .find_syntax_by_extension(&code_lang)
+                    .unwrap();
+
+                let mut html_generator = ClassedHTMLGenerator::new_with_class_style(
+                    syntax,
+                    &highlight_state.syntax_set,
+                    ClassStyle::Spaced,
+                );
+
+                for line in LinesWithEndings::from(&code) {
+                    html_generator
+                        .parse_html_for_line_which_includes_newline(line)
+                        .unwrap();
+                }
+
+                let generated_html = html_generator.finalize();
+
+                let html = format!(
+                    "<div class=\"code highlight\"><pre>{}</pre></div>",
+                    generated_html
+                );
 
                 in_code_block = false;
                 code.clear();
-                ret
+                Some(Event::Html(html.into()))
             }
         }
 
@@ -174,7 +197,6 @@ pub fn process_markdown(
 
         Event::End(TagEnd::Link {}) => Some(Event::Html("</a>".into())),
 
-      
         _ => Some(event),
     });
 
@@ -192,11 +214,19 @@ pub fn process_function(
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
     config: &Config,
+    highlight_state: &HighlightState,
 ) {
     if let Some(ref mut comment) = &mut func.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
-        comment.description =
-            process_markdown(&comment.description, index, doctests, config).content;
+        comment.brief =
+            process_markdown(&comment.brief, index, doctests, config, highlight_state).content;
+        comment.description = process_markdown(
+            &comment.description,
+            index,
+            doctests,
+            config,
+            highlight_state,
+        )
+        .content;
     }
 }
 
@@ -205,11 +235,19 @@ pub fn process_enum(
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
     config: &Config,
+    highlight_state: &HighlightState,
 ) {
     if let Some(ref mut comment) = &mut enm.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
-        comment.description =
-            process_markdown(&comment.description, index, doctests, config).content;
+        comment.brief =
+            process_markdown(&comment.brief, index, doctests, config, highlight_state).content;
+        comment.description = process_markdown(
+            &comment.description,
+            index,
+            doctests,
+            config,
+            highlight_state,
+        )
+        .content;
     }
 }
 
@@ -218,19 +256,27 @@ pub fn process_record(
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
     config: &Config,
+    highlight_state: &HighlightState,
 ) {
     if let Some(ref mut comment) = &mut record.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
-        comment.description =
-            process_markdown(&comment.description, index, doctests, config).content;
+        comment.brief =
+            process_markdown(&comment.brief, index, doctests, config, highlight_state).content;
+        comment.description = process_markdown(
+            &comment.description,
+            index,
+            doctests,
+            config,
+            highlight_state,
+        )
+        .content;
     }
 
     for method in &mut record.methods {
-        process_function(method, index, doctests, config);
+        process_function(method, index, doctests, config, highlight_state);
     }
 
     for ctor in &mut record.ctor {
-        process_function(ctor, index, doctests, config);
+        process_function(ctor, index, doctests, config, highlight_state);
     }
 }
 
@@ -239,26 +285,34 @@ pub fn process_namespace(
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
     config: &Config,
+    highlight_state: &HighlightState,
 ) {
     if let Some(ref mut comment) = &mut namespace.comment {
-        comment.brief = process_markdown(&comment.brief, index, doctests, config).content;
-        comment.description =
-            process_markdown(&comment.description, index, doctests, config).content;
+        comment.brief =
+            process_markdown(&comment.brief, index, doctests, config, highlight_state).content;
+        comment.description = process_markdown(
+            &comment.description,
+            index,
+            doctests,
+            config,
+            highlight_state,
+        )
+        .content;
     }
 
     for func in &mut namespace.functions {
-        process_function(func, index, doctests, config);
+        process_function(func, index, doctests, config, highlight_state);
     }
 
     for record in &mut namespace.records {
-        process_record(record, index, doctests, config);
+        process_record(record, index, doctests, config, highlight_state);
     }
 
     for enm in &mut namespace.enums {
-        process_enum(enm, index, doctests, config);
+        process_enum(enm, index, doctests, config, highlight_state);
     }
 
     for ns in &mut namespace.namespaces {
-        process_namespace(ns, index, doctests, config);
+        process_namespace(ns, index, doctests, config, highlight_state);
     }
 }

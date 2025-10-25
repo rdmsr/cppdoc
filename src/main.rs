@@ -4,7 +4,11 @@ use indicatif::{ProgressBar, ProgressStyle};
 use render::get_path_for_name;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::io::{BufWriter, Write};
 use std::{path::Path, time::Duration};
+use syntect::highlighting::{Theme, ThemeSet};
+use syntect::html::css_for_theme_with_class_style;
+use syntect::html::ClassStyle;
 
 mod book;
 mod comment;
@@ -16,6 +20,9 @@ mod report;
 mod templates;
 
 use report::{report_error, report_warning};
+
+use syntect::dumps::{from_binary, from_dump_file};
+use syntect::parsing::SyntaxSet;
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -48,26 +55,40 @@ enum Commands {
         /// Configuration file to use
         #[arg(short, long, default_value = "cppdoc.toml", value_name = "FILE")]
         config_file: Option<String>,
+
+        /// Cached JSON output to use
+        #[arg(long, value_name = "FILE")]
+        cached: Option<String>,
     },
 }
+
+const THEME_DUMP: &[u8] = include_bytes!("../assets/all.themedump");
 
 fn render_page(
     page: &book::Page,
     index: &HashMap<String, String>,
     doctests: &mut Vec<doctest::Doctest>,
     config: &config::Config,
+    highlight_state: &render::HighlightState,
 ) -> Vec<render::Page> {
     let mut ret = vec![];
 
     match std::fs::read_to_string(&page.path) {
         Ok(source) => {
-            let mut page_ret = render::process_markdown(&source, &index, doctests, &config);
+            let mut page_ret =
+                render::process_markdown(&source, &index, doctests, &config, highlight_state);
 
             page_ret.title = page.name.clone();
             page_ret.path = Path::new(&page.path).to_path_buf();
 
             for sub_page in &page.sub_pages {
-                ret.extend(render_page(&sub_page, &index, doctests, &config));
+                ret.extend(render_page(
+                    &sub_page,
+                    &index,
+                    doctests,
+                    &config,
+                    highlight_state,
+                ));
             }
 
             ret.push(page_ret);
@@ -88,6 +109,7 @@ fn main() {
         Commands::Build {
             dump_json,
             config_file,
+            cached,
         } => {
             let config_file = config_file.unwrap_or("cppdoc.toml".to_string());
 
@@ -104,27 +126,82 @@ fn main() {
 
             let mut output: parser::Output = Default::default();
 
-            let bar = ProgressBar::new_spinner();
+            if cached.is_none() {
+                let bar = ProgressBar::new_spinner();
+                for file in glob(&config.input.glob).expect("Failed to read glob pattern") {
+                    match file {
+                        Ok(file) => {
+                            bar.set_message(format!("Parsing {}", file.to_str().unwrap()));
+                            parser.parse(&config, file.to_str().unwrap(), &mut output);
+                            bar.tick();
+                        }
+                        Err(e) => {
+                            report_warning(&format!("Error reading input file: {e:}"));
+                        }
+                    };
+                }
 
-            for file in glob(&config.input.glob).expect("Failed to read glob pattern") {
-                match file {
-                    Ok(file) => {
-                        bar.set_message(format!("Parsing {}", file.to_str().unwrap()));
-                        parser.parse(&config, file.to_str().unwrap(), &mut output);
-                        bar.tick();
-                    }
+                bar.finish_and_clear();
+            } else {
+                let data = std::fs::read_to_string(cached.unwrap()).expect("Unable to read file");
+                match serde_json::from_str::<parser::Output>(&data) {
+                    Ok(out) => output = out,
                     Err(e) => {
-                        report_warning(&format!("Error reading input file: {e:}"));
+                        report_error(&format!("Error reading cached cppdoc database: {e:}"));
                     }
-                };
+                }
             }
-
-            bar.finish_and_clear();
 
             if dump_json {
                 let json = serde_json::to_string_pretty(&output).unwrap();
                 println!("{}", json);
                 return;
+            }
+
+            let mut highlight_state = render::HighlightState {
+                syntax_set: SyntaxSet::load_defaults_newlines(),
+                theme_set: Default::default(),
+            };
+
+            let mut theme: Theme;
+
+            if let Some(ref p) = config.output.theme_dump_file {
+                highlight_state.theme_set = match from_dump_file(&p) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        report_error(&format!("Could not load theme set: {}", e));
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                highlight_state.theme_set = from_binary(THEME_DUMP);
+            }
+
+            if let Some(ref t) = config.output.theme {
+                if !highlight_state.theme_set.themes.contains_key(t) {
+                    report_error(&format!("Could not find theme {}", t));
+                    std::process::exit(1);
+                }
+
+                theme = highlight_state.theme_set.themes[t].clone();
+            } else if let Some(ref t) = config.output.theme_file {
+                highlight_state.theme_set = ThemeSet::new();
+
+                theme = match ThemeSet::get_theme(t) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        report_error(&format!("Could not load theme: {}", e));
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                theme = highlight_state.theme_set.themes["one-dark"].clone();
+            }
+
+            for style in theme.scopes.iter_mut() {
+                if let Some(_) = style.style.font_style {
+                    style.style.font_style = None;
+                }
             }
 
             let root_namespace = if let Some(ref root_namespace) = config.output.root_namespace {
@@ -141,7 +218,13 @@ fn main() {
 
             let mut doctests = Vec::new();
 
-            render::process_namespace(root_namespace, &output.index, &mut doctests, &config);
+            render::process_namespace(
+                root_namespace,
+                &output.index,
+                &mut doctests,
+                &config,
+                &highlight_state,
+            );
 
             let index = match config.pages.index {
                 Some(ref x) => match std::fs::read_to_string(x) {
@@ -157,8 +240,13 @@ fn main() {
                 },
             };
 
-            let mut index_html =
-                render::process_markdown(&index, &output.index, &mut doctests, &config);
+            let mut index_html = render::process_markdown(
+                &index,
+                &output.index,
+                &mut doctests,
+                &config,
+                &highlight_state,
+            );
 
             index_html.path = "index.html".into();
 
@@ -180,7 +268,13 @@ fn main() {
 
             for segment in &summary.segments {
                 if let book::Segment::Page(p) = segment {
-                    extra_pages.extend(render_page(&p, &output.index, &mut doctests, &config));
+                    extra_pages.extend(render_page(
+                        &p,
+                        &output.index,
+                        &mut doctests,
+                        &config,
+                        &highlight_state,
+                    ));
                 }
             }
 
@@ -360,6 +454,28 @@ fn main() {
                 index_json,
             )
             .unwrap();
+
+            // Generate syntax highlighting CSS file
+            let css_file =
+                std::fs::File::create(Path::new(&config.output.path).join("highlight.css"))
+                    .unwrap();
+
+            let mut css_dark_writer = BufWriter::new(&css_file);
+
+            match css_for_theme_with_class_style(&theme, ClassStyle::Spaced) {
+                Ok(s) => {
+                    writeln!(css_dark_writer, "{}", s).unwrap();
+                }
+
+                Err(e) => {
+                    report_error(&format!(
+                        "Could not generate syntax highlighting file: {}",
+                        e
+                    ));
+
+                    std::process::exit(1);
+                }
+            }
 
             println!("Documentation generated in {}", config.output.path);
         }

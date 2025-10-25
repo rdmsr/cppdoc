@@ -1,9 +1,9 @@
 use crate::comment;
 use crate::config;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Comment {
     pub description: String,
     pub brief: String,
@@ -11,13 +11,13 @@ pub struct Comment {
     pub impl_: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NestedField {
     Record(Record),
     Enum(Enum),
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Field {
     pub name: String,
     #[serde(rename = "type")]
@@ -28,7 +28,7 @@ pub struct Field {
     pub struct_: Option<NestedField>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Record {
     pub name: String,
     pub fields: Vec<Field>,
@@ -41,13 +41,13 @@ pub struct Record {
     pub nested: Option<Vec<NestedField>>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EnumValue {
     pub name: String,
     pub comment: Option<Comment>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Enum {
     pub name: String,
     pub comment: Option<Comment>,
@@ -55,7 +55,7 @@ pub struct Enum {
     pub values: Vec<EnumValue>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FunctionProps {
     #[serde(rename = "const")]
     pub const_: bool,
@@ -65,19 +65,19 @@ pub struct FunctionProps {
     pub virtual_: bool,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TemplateParameter {
     pub name: String,
     #[serde(rename = "type")]
     pub type_: String,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Template {
     pub parameters: Vec<TemplateParameter>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub name: String,
     pub return_type: String,
@@ -89,7 +89,7 @@ pub struct Function {
     pub overloads: Option<Vec<Function>>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Alias {
     pub namespace: Option<String>,
     pub name: String,
@@ -98,7 +98,7 @@ pub struct Alias {
     pub comment: Option<Comment>,
 }
 
-#[derive(Serialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Namespace {
     pub name: String,
     pub comment: Option<Comment>,
@@ -110,7 +110,7 @@ pub struct Namespace {
     pub namespace: Option<String>,
 }
 
-#[derive(Serialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Output {
     pub root: Namespace,
     pub index: HashMap<String, String>,

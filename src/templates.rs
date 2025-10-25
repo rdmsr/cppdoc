@@ -26,15 +26,15 @@ fn cleanup_type(type_: &str) -> String {
         .replace(" *", "</span>*")
         .replace(
             "struct ",
-            "</span><span class=\"k\">struct </span><span class=\"kt\">",
+            "</span><span class=\"storage type c\">struct </span><span class=\"storage type c\">",
         )
         .replace(
             "enum ",
-            "</span><span class=\"k\">enum </span><span class=\"kt\">",
+            "</span><span class=\"storage type c\">enum </span><span class=\"storage type c\">",
         )
         .replace(
             "const ",
-            "</span><span class=\"k\">const </span><span class=\"kt\">",
+            "</span><span class=\"storage type c\">const </span><span class=\"storage type c\">",
         );
 
     return ret;
@@ -47,7 +47,7 @@ fn tera_output_template(index: HashMap<String, String>, config: Config) -> impl 
             let namespace = args.get("namespace").unwrap().as_str().unwrap();
 
             let mut prefix = String::new();
-            prefix.push_str("<span class=\"k\">template</span> &lt;");
+            prefix.push_str("<span class=\"storage type c\">template</span> &lt;");
 
             let params = templ.get("parameters").unwrap().as_array().unwrap();
             let params_length = params.len();
@@ -56,8 +56,10 @@ fn tera_output_template(index: HashMap<String, String>, config: Config) -> impl 
                 let type_ = param.get("type").unwrap().as_str().unwrap();
                 prefix.push_str(&format!(
                     "{} {}",
-                    get_link_for_type(type_, namespace, &config, &index)
-                        .unwrap_or(format!("<span class=\"kt\">{}</span>", cleanup_type(type_))),
+                    get_link_for_type(type_, namespace, &config, &index).unwrap_or(format!(
+                        "<span class=\"storage type c\">{}</span>",
+                        cleanup_type(type_)
+                    )),
                     param.get("name").unwrap().as_str().unwrap()
                 ));
 
@@ -91,7 +93,7 @@ fn tera_get_link_for_namespace(index: HashMap<String, String>) -> impl tera::Fun
 
                     if i != parts_count - 1 {
                         link.push_str(&format!(
-                            "<a href=\"/{}/index.html\"><span class=\"kt\">{}</span></a>",
+                            "<a href=\"/{}/index.html\"><span class=\"storage type c\">{}</span></a>",
                             acc, part
                         ));
                     } else {
@@ -99,7 +101,7 @@ fn tera_get_link_for_namespace(index: HashMap<String, String>) -> impl tera::Fun
                         if let Some(entry) = index.get(namespace) {
                             if entry == "record" {
                                 link.push_str(&format!(
-				    "<a href=\"{}/record.{}.html\"><span class=\"kt\">{}</span></a>",
+				    "<a href=\"{}/record.{}.html\"><span class=\"storage type c\">{}</span></a>",
 				    if part.len() == acc.len() { "".to_string() } else {
 					format!("/{}", &acc[0.. acc.len() - part.len()]).to_string()
 				    },
@@ -108,7 +110,7 @@ fn tera_get_link_for_namespace(index: HashMap<String, String>) -> impl tera::Fun
 				));
                             } else if entry == "namespace" {
                                 link.push_str(&format!(
-                                    "<a href=\"/{}/index.html\"><span class=\"kt\">{}</span></a>",
+                                    "<a href=\"/{}/index.html\"><span class=\"storage type c\">{}</span></a>",
                                     acc, part
                                 ));
                             }
@@ -138,7 +140,7 @@ fn tera_output_struct(index: HashMap<String, String>, config: Config) -> impl te
             let type_ = args.get("type").unwrap().as_str().unwrap();
 
             if type_ == "struct" {
-                let mut listing = "<span class=\"k\">struct</span> {\n".to_string();
+                let mut listing = "<span class=\"storage type c\">struct</span> {\n".to_string();
 
                 let fields = struct_
                     .get("Record")
@@ -161,7 +163,7 @@ fn tera_output_struct(index: HashMap<String, String>, config: Config) -> impl te
                     listing.push_str(&format!(
                         "{} {};",
                         get_link_for_type(type_, namespace, &config, &index).unwrap_or(format!(
-                            "<span class=\"kt\">{}</span>",
+                            "<span class=\"storage type c\">{}</span>",
                             cleanup_type(type_)
                         )),
                         name
@@ -180,7 +182,7 @@ fn tera_output_struct(index: HashMap<String, String>, config: Config) -> impl te
 
                 Ok(tera::to_value(listing).unwrap())
             } else if type_ == "enum" {
-                let mut listing = "<span class=\"k\">enum</span> {\n".to_string();
+                let mut listing = "<span class=\"storage type c\">enum</span> {\n".to_string();
 
                 let values = struct_
                     .get("Enum")
@@ -349,7 +351,7 @@ fn get_link_for_type(
             if let Some(link) = link {
                 ret.push_str(&link);
             } else {
-                ret.push_str("<span class=\"kt\">");
+                ret.push_str("<span class=\"storage type c\">");
                 ret.push_str(cleanup_type(param).as_str());
                 ret.push_str("</span>");
             }
@@ -362,7 +364,7 @@ fn get_link_for_type(
         return Some(format!(
             "{}&lt;{}&gt;{}",
             get_link_for_type(type_name, curr_namespace, config, index).unwrap_or_else(|| format!(
-                "<span class=\"kt\">{}</span>",
+                "<span class=\"storage type c\">{}</span>",
                 cleanup_type(type_name)
             )),
             ret,
@@ -377,7 +379,7 @@ fn get_link_for_type(
 
         if let Some(ret) = ret {
             return Some(format!(
-                "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+                "<a href=\"{}/{}.html\"><span class=\"storage type c\">{}</span></a>{}",
                 config.output.base_url, ret, name_without_suffix, suffix
             ));
         }
@@ -389,20 +391,20 @@ fn get_link_for_type(
     let name_without_suffix = name_without_suffix
         .replace(
             "struct ",
-            "</span><span class=\"k\">struct </span><span class=\"kt\">",
+            "</span><span class=\"storage type c\">struct </span><span class=\"storage type c\">",
         )
         .replace(
             "enum ",
-            "</span><span class=\"k\">enum </span><span class=\"kt\">",
+            "</span><span class=\"storage type c\">enum </span><span class=\"storage type c\">",
         )
         .replace(
             "const ",
-            "</span><span class=\"k\">const </span><span class=\"kt\">",
+            "</span><span class=\"storage type c\">const </span><span class=\"storage type c\">",
         );
 
     if let Some(ret) = ret {
         return Some(format!(
-            "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+            "<a href=\"{}/{}.html\"><span class=\"storage type c\">{}</span></a>{}",
             config.output.base_url, ret, name_without_suffix, suffix
         ));
     }
@@ -412,7 +414,7 @@ fn get_link_for_type(
 
     if let Some(ret) = ret {
         return Some(format!(
-            "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+            "<a href=\"{}/{}.html\"><span class=\"storage type c\">{}</span></a>{}",
             config.output.base_url, ret, name_without_suffix, suffix
         ));
     }
@@ -426,7 +428,7 @@ fn get_link_for_type(
 
         if let Some(ret) = ret {
             return Some(format!(
-                "<a href=\"{}/{}.html\"><span class=\"kt\">{}</span></a>{}",
+                "<a href=\"{}/{}.html\"><span class=\"storage type c\">{}</span></a>{}",
                 config.output.base_url, ret, name_without_suffix, suffix
             ));
         }
@@ -480,7 +482,7 @@ fn tera_get_url_for(index: HashMap<String, String>, config: Config) -> impl tera
             ) {
                 Some(x) => Ok(tera::to_value(x).unwrap()),
                 None => Ok(tera::to_value(format!(
-                    "<span class=\"kt\">{}</span>",
+                    "<span class=\"storage type c\">{}</span>",
                     cleanup_type(the_type.as_str().unwrap())
                 ))
                 .unwrap()),
@@ -506,7 +508,7 @@ pub fn output_record(
     }
 
     if let Some(templ) = &record.template {
-        prefix.push_str("<span class=\"k\">template</span> &lt;");
+        prefix.push_str("<span class=\"storage type c\">template</span> &lt;");
 
         let params_length = templ.parameters.len();
 
@@ -520,7 +522,7 @@ pub fn output_record(
                     index
                 )
                 .unwrap_or(format!(
-                    "<span class=\"kt\">{}</span>",
+                    "<span class=\"storage type c\">{}</span>",
                     cleanup_type(&param.type_)
                 )),
                 param.name
@@ -535,7 +537,7 @@ pub fn output_record(
     }
 
     let mut listing = format!(
-        "{}<span class=\"k\">{}</span> {} {{",
+        "{}<span class=\"storage type c\">{}</span> {} {{",
         prefix, record.kind, record.name
     );
     let ns_name = record.namespace.clone().unwrap_or_default();
@@ -547,7 +549,7 @@ pub fn output_record(
     for field in &record.fields {
         if let Some(nested) = &field.struct_ {
             if let parser::NestedField::Record(struct_) = nested {
-                listing.push_str("  <span class=\"k\">struct</span> {\n");
+                listing.push_str("  <span class=\"storage type c\">struct</span> {\n");
                 for struct_field in struct_.fields.iter() {
                     listing.push_str("  ");
                     listing.push_str(&format!(
@@ -559,7 +561,7 @@ pub fn output_record(
                             index
                         )
                         .unwrap_or(format!(
-                            "<span class=\"kt\">{}</span>",
+                            "<span class=\"storage type c\">{}</span>",
                             cleanup_type(&struct_field.type_)
                         )),
                         struct_field.name
@@ -568,7 +570,7 @@ pub fn output_record(
                 listing.push_str(&format!("  }} {};\n", field.name));
                 continue;
             } else if let parser::NestedField::Enum(enm) = nested {
-                listing.push_str("  <span class=\"k\">enum</span> {\n");
+                listing.push_str("  <span class=\"storage type c\">enum</span> {\n");
                 for enum_field in enm.values.iter() {
                     listing.push_str("  ");
                     listing.push_str(&format!("  {};\n", enum_field.name));
@@ -580,7 +582,10 @@ pub fn output_record(
         listing.push_str(&format!(
             "  {} {};\n",
             get_link_for_type(field.type_.as_str(), ns_name.as_str(), config, index).unwrap_or(
-                format!("<span class=\"kt\">{}</span>", cleanup_type(&field.type_))
+                format!(
+                    "<span class=\"storage type c\">{}</span>",
+                    cleanup_type(&field.type_)
+                )
             ),
             field.name
         ));
@@ -678,10 +683,10 @@ fn output_alias(
     let ns_name = alias.namespace.clone().unwrap_or_default();
 
     let listing = format!(
-        "<span class=\"k\">using</span> {} = {}",
+        "<span class=\"storage type c\">using</span> {} = {}",
         alias.name,
         get_link_for_type(alias.type_.as_str(), &ns_name, config, index).unwrap_or(format!(
-            "<span class=\"kt\">{}</span>",
+            "<span class=\"storage type c\">{}</span>",
             cleanup_type(&alias.type_)
         )),
     );
@@ -732,7 +737,10 @@ fn output_enum(
 
     let mut context = tera::Context::new();
 
-    let mut listing = format!("<span class=\"k\">enum</span> {} {{", enum_.name);
+    let mut listing = format!(
+        "<span class=\"storage type c\">enum</span> {} {{",
+        enum_.name
+    );
 
     let value_cnt = enum_.values.len();
 

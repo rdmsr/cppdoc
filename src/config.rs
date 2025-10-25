@@ -1,5 +1,5 @@
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::error::Error;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
@@ -41,6 +41,10 @@ pub struct Output {
     pub bundle_mermaid: bool,
     #[serde(default)]
     pub bundle_minisearch: bool,
+
+    pub theme: Option<String>,
+    pub theme_file: Option<String>,
+    pub theme_dump_file: Option<String>,
 }
 
 fn bool_true() -> bool {
@@ -55,7 +59,7 @@ pub struct Doctest {
 }
 
 impl Config {
-    pub fn new(config_file: &str) -> Result<Self> {
+    pub fn new(config_file: &str) -> Result<Self, Box<dyn Error>> {
         let config_str = std::fs::read_to_string(config_file)?;
 
         let config: Config = toml::from_str(&config_str)?;

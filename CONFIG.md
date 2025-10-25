@@ -17,6 +17,10 @@ The configuration file is a TOML file named `cppdoc.toml` with the following sec
 - `enable_mermaid`: Whether to enable mermaid, default: `true`
 - `bundle_mermaid`: Whether to bundle mermaid (`mermaid.mjs` in the static directory), otherwise it is fetched from a release online, default: `false`
 - `bundle_minisearch`: Whether to bundle minisearch (`minisearch.js` in the static directory), otherwise it is fetched from a release online, default `false`
+- `theme` (optional): Syntax highlighting theme to use, this must be part of the theme set specified by `theme_set_file` or the [default theme set](https://github.com/getzola/zola/tree/master/components/config/sublime/themes)
+- `theme_file` (optional): Path to a sublime text .tmTheme syntax highlighting theme to use
+- `theme_set_file` (optional): Path to a compressed .themedump `syntect` theme set file
+
 
 ## `pages`
 - `index` (optional): Markdown file to use as the index file, if an index page is not specified, the root namespace's comment will be used instead.
