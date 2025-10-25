@@ -51,6 +51,7 @@ book = "extra-pages"
 static_dir = "static"
 path = "docs"
 base_url = "/cppdoc"
+theme = "ayu-dark"
 
 [doctests]
 enable = false 
