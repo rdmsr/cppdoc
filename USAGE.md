@@ -8,11 +8,21 @@ To build documentation for a project:
 cppdoc build
 ```
 
-To output JSON representing the codebase:
+To output JSON representing the code base:
 
 ```
 cppdoc build -d
 ```
+
+### Cached Builds
+It is possible to do so-called cached builds, where the JSON output from a previous build is reuse and only markdown pages are rendered again:
+
+```
+cppdoc build --cached <file>
+```
+
+Cached builds are useful when working on documentation outside of code changes.
+
 
 More command-line options can be displayed using `-h` or `--help`.
 
@@ -27,11 +37,22 @@ enum MyEnum {
 }
 ```
 
+It is also possible to use `/**` and `/**<` C-style comments:
+```c
+/**
+ * Documentation for 'MyEnum'
+*/
+enum MyEnum {
+	A /**< Documentation for 'A' */
+}
+```
+
+
 Comments content are parsed as cppdoc-flavored markdown, there is no support for `javadoc`/Doxygen-style comments.
 
-### Hiding nodes
+### Hiding elements
 
-Nodes can be hidden by annotating them with `/// #[doc(hidden)]`
+Elements can be hidden by annotating them with `#[doc(hidden)]`
 
 ```cpp
 /// #[doc(hidden)]
@@ -58,9 +79,9 @@ graph TD;
 ```
 
 ## Documentation tests
-`cppdoc` supports running documentation tests akin to `rustdoc`, these tests are written in `cpp` and `c++` codeblocks and help ensure that code examples are up-to-date with API usage.
+`cppdoc` supports running documentation tests akin to `rustdoc`, these tests are written in `cpp` and `c++` code blocks and help ensure that code examples are up-to-date with API usage.
 
-Documentation codeblocks feature special syntax:
+Documentation code blocks feature special syntax:
 - Lines prefixed with `@` won't be displayed, but will be added to the source code:
 
 ```
@@ -118,4 +139,4 @@ ASSERT(a == 1);
 
 
 # Styling
-`cppdoc` expects a `style.css` file to be present at the root of the generated documentation. It is recommended to put the stylesheets in a static directory and set the `static` option in the configuration file.
+`cppdoc` expects a `style.css` file to be present at the root of the generated documentation and generates a `highlight.css` file from the syntax highlighting theme. It is recommended to put the style sheets in a static directory and set the `static` option in the configuration file.
