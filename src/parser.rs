@@ -120,6 +120,31 @@ pub struct Parser<'a> {
     index: clang::Index<'a>,
 }
 
+impl Output {
+    fn merge_namespace(ns: &mut Namespace, other: Namespace) {
+        // Merge functions, records, enums, aliases directly
+        ns.functions.extend(other.functions);
+        ns.records.extend(other.records);
+        ns.enums.extend(other.enums);
+        ns.aliases.extend(other.aliases);
+
+        // Merge nested namespaces
+        for other_sub in other.namespaces {
+            if let Some(existing_sub) = ns.namespaces.iter_mut().find(|n| n.name == other_sub.name)
+            {
+                Self::merge_namespace(existing_sub, other_sub);
+            } else {
+                ns.namespaces.push(other_sub);
+            }
+        }
+    }
+
+    pub fn merge(&mut self, other: Output) {
+        Self::merge_namespace(&mut self.root, other.root);
+        self.index.extend(other.index);
+    }
+}
+
 impl<'a> Parser<'a> {
     pub fn new(clang: &'a clang::Clang) -> Self {
         let index = clang::Index::new(clang, false, false);

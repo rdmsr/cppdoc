@@ -1,8 +1,10 @@
 use clap::{Parser, Subcommand};
 use glob::glob;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use render::get_path_for_name;
 use serde::Serialize;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::{BufWriter, Write};
 use std::{path::Path, time::Duration};
@@ -102,6 +104,15 @@ fn render_page(
     }
 }
 
+thread_local! {
+    static THREAD_PARSER: RefCell<parser::Parser<'static>> = {
+        let clang = Box::new(clang::Clang::new().unwrap());
+        let clang_ref: &'static clang::Clang = Box::leak(clang);
+        let parser = parser::Parser::new(clang_ref);
+        RefCell::new(parser)
+    };
+}
+
 fn main() {
     let args = Cli::parse();
 
@@ -112,6 +123,7 @@ fn main() {
             cached,
         } => {
             let config_file = config_file.unwrap_or("cppdoc.toml".to_string());
+            let m = MultiProgress::new();
 
             let config = match config::Config::new(&config_file) {
                 Ok(config) => config,
@@ -121,27 +133,46 @@ fn main() {
                 }
             };
 
-            let clang = clang::Clang::new().unwrap();
-            let mut parser = parser::Parser::new(&clang);
-
             let mut output: parser::Output = Default::default();
 
             if cached.is_none() {
-                let bar = ProgressBar::new_spinner();
-                for file in glob(&config.input.glob).expect("Failed to read glob pattern") {
-                    match file {
-                        Ok(file) => {
-                            bar.set_message(format!("Parsing {}", file.to_str().unwrap()));
-                            parser.parse(&config, file.to_str().unwrap(), &mut output);
+                let files: Vec<_> = glob(&config.input.glob)
+                    .expect("Failed to read glob pattern")
+                    .filter_map(Result::ok)
+                    .collect();
+
+                let bar = m.add(ProgressBar::new_spinner());
+
+                // Run the parser in parallel and collect all the results
+                let results: Vec<parser::Output> = files
+                    .par_iter()
+                    .map(|file| {
+                        let mut output = parser::Output::default();
+                        THREAD_PARSER.with(|state| {
+                            let mut state = state.borrow_mut();
+                            let parser = &mut *state;
+
+                            bar.set_message(format!("Parsing {}", file.to_string_lossy()));
+
+                            parser.parse(&config, file.to_string_lossy().as_ref(), &mut output);
+
                             bar.tick();
-                        }
-                        Err(e) => {
-                            report_warning(&format!("Error reading input file: {e:}"));
-                        }
-                    };
+                        });
+
+                        output
+                    })
+                    .collect();
+
+                // Merge the results
+                let mut final_output = parser::Output::default();
+
+                for r in results {
+                    final_output.merge(r);
                 }
 
-                bar.finish_and_clear();
+                output = final_output;
+
+                bar.finish_with_message("Parsing complete");
             } else {
                 let data = std::fs::read_to_string(cached.unwrap()).expect("Unable to read file");
                 match serde_json::from_str::<parser::Output>(&data) {
@@ -211,7 +242,7 @@ fn main() {
                     .namespaces
                     .iter_mut()
                     .find(|ns| ns.name == *root_namespace)
-                    .unwrap()
+                    .expect("Invalid root namespace name")
             } else {
                 &mut output.root
             };
@@ -285,7 +316,7 @@ fn main() {
 
             if let Some(ref doctest_conf) = config.doctests {
                 if doctest_conf.enable {
-                    let bar = ProgressBar::new(doctests.len() as u64);
+                    let bar = m.add(ProgressBar::new(doctests.len() as u64));
 
                     bar.set_style(
                         ProgressStyle::with_template("Running doctest {pos}/{len}").unwrap(),
@@ -342,6 +373,8 @@ fn main() {
             context.insert("pages", &pages);
             context.insert("summary", &summary);
 
+            let bar = m.add(ProgressBar::new_spinner());
+
             for page in &pages.extra {
                 context.insert("content", &page.content);
                 context.insert("title", &page.title);
@@ -350,6 +383,8 @@ fn main() {
                 let mut out_path = Path::new(&config.output.path).join(&page.path);
 
                 out_path.set_extension("md.html");
+
+                bar.set_message(format!("Rendering page {}", page.path.to_str().unwrap()));
 
                 std::fs::write(&out_path, tera.render("docpage", &context).unwrap())
                     .map_err(|e| {
@@ -361,7 +396,10 @@ fn main() {
                         std::process::exit(1);
                     })
                     .unwrap();
+                bar.tick();
             }
+
+            bar.finish_with_message("Pages rendered");
 
             context.insert("page", &pages.index);
 
