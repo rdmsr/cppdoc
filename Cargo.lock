@@ -130,7 +130,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "clang"
 version = "2.0.0"
-source = "git+https://github.com/rdmsr/clang-rs#d111b49402f2277309f03e0ff7811c141007e3bc"
+source = "git+https://github.com/rdmsr/clang-rs#08fff772d124ac98a316778ec322f43629dad99f"
 dependencies = [
  "clang-sys",
  "libc",

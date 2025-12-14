@@ -646,6 +646,10 @@ impl<'a> Parser<'a> {
                 ns.aliases.push(alias);
             }
 
+            clang::EntityKind::ConceptDecl => {
+                println!("warning: concepts are not supported");
+            }
+
             _ => {}
         }
     }

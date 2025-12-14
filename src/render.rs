@@ -271,6 +271,21 @@ pub fn process_record(
         .content;
     }
 
+    for field in &mut record.fields {
+        if let Some(ref mut comment) = &mut field.comment {
+            comment.brief =
+                process_markdown(&comment.brief, index, doctests, config, highlight_state).content;
+            comment.description = process_markdown(
+                &comment.description,
+                index,
+                doctests,
+                config,
+                highlight_state,
+            )
+            .content;
+        }
+    }
+
     for method in &mut record.methods {
         process_function(method, index, doctests, config, highlight_state);
     }
